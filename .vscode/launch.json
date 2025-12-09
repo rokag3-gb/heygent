@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run heygent",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/heygent/bin/Debug/net8.0/heygent.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/heygent",
+            //"console": "externalTerminal"
+            "console": "internalConsole",
+            // "env": {
+            //     "DOTNET_ENVIRONMENT": "Development",
+            //     //"ASPNETCORE_ENVIRONMENT": "Development"
+            // }
+        },
+        {
+            "name": "Run heygent.Awaker",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/heygent.Awaker/bin/Debug/net8.0/heygent.Awaker.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/heygent.Awaker",
+            "console": "internalConsole",
+            // "env": {
+            //     "DOTNET_ENVIRONMENT": "Development",
+            //     //"ASPNETCORE_ENVIRONMENT": "Development"
+            // }
+        }
+    ]
+}

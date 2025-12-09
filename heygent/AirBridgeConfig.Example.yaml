@@ -1,0 +1,29 @@
+# heygent 설정 파일 예제
+schedule:
+  cron_expression:
+  - 0/5 * * * * * # 매 5초 마다 [초 분 시 일 월 요일]
+  - 0/8 * * * * * # 매 8초 마다 [초 분 시 일 월 요일]
+  time_zone: Korea Standard Time
+
+source:
+  type: mounted_path
+  mounted_path:
+    path: ~/ledger/root/
+
+target:
+  type: azure_blob_sftp
+  azure_blob_sftp:
+    host: "your-storage-account.blob.core.windows.net"
+    port: 22
+    username: "your-username"
+    password: "your-password"
+
+notification:
+  type: lark_webhook
+  lark_webhook:
+    webhook_url: https://open.larksuite.com/open-apis/bot/v2/hook/{bot-uuid}
+    secret_token: {your-secret-token}
+  enabled: n
+
+awaker:
+  ping_interval_min: 0.5 # 단위: 분
