@@ -17,6 +17,7 @@
   <ItemGroup>
     <PackageReference Include="Cronos" Version="0.11.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
     <PackageReference Include="Serilog" Version="3.1.1" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
@@ -35,12 +36,10 @@
     <Message Text="스크립트 경로: $(MSBuildProjectDirectory)/bump-build.sh" Importance="high" />
     
     <!-- Windows: PowerShell 7 이상 -->
-    <Exec Command="pwsh -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\bump-build.ps1&quot;" 
-          Condition=" '$(OS)' == 'Windows_NT' " />
+    <Exec Command="pwsh -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\bump-build.ps1&quot;" Condition=" '$(OS)' == 'Windows_NT' " />
     
     <!-- Linux/WSL -->
-    <Exec Command="bash &quot;$(MSBuildProjectDirectory)/bump-build.sh&quot;" 
-          Condition=" '$(OS)' != 'Windows_NT' " />
+    <Exec Command="bash &quot;$(MSBuildProjectDirectory)/bump-build.sh&quot;" Condition=" '$(OS)' != 'Windows_NT' " />
   </Target>
 
 </Project>
