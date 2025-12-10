@@ -73,7 +73,7 @@ class Program
 
             try
             {
-                logger.LogInformation($"heygent.Awaker {AssemblyInfo.HeadVer} Started! ({AssemblyInfo.InformationVersion})");
+                logger.LogInformation($"Awaker {AssemblyInfo.HeadVer} Started! ({AssemblyInfo.InformationVersion})");
 
                 // YAML 설정 파일 로드 -> new LoggerFactory()로 YamlConfigHelper을 직접 만들지 말고 DI에서 꺼내 쓰는 방식으로 변경
                 var yamlConfigHelper = host.Services.GetRequiredService<YamlConfigHelper>();
@@ -91,12 +91,12 @@ class Program
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "heygent.Awaker 실행 중 오류가 발생했습니다.");
+                logger.LogError(ex, "Awaker 실행 중 오류가 발생했습니다.");
             }
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "heygent.Awaker 시작 중 오류가 발생했습니다.");
+            Log.Fatal(ex, "Awaker 시작 중 오류가 발생했습니다.");
         }
         finally
         {
@@ -116,24 +116,24 @@ class Program
                 {
                     if (!process.HasExited)
                     {
-                        logger.LogInformation($"heygent 프로세스 종료 중... (PID: {process.Id})");
+                        logger.LogInformation($"애플리케이션 프로세스 종료 중... (PID: {process.Id})");
 
                         process.Kill(); // heygent 프로세스 종료
 
                         process.WaitForExit(TimeSpan.FromSeconds(4)); // 4초 대기
 
-                        logger.LogInformation($"heygent 프로세스 종료 완료 (PID: {process.Id})");
+                        logger.LogInformation($"애플리케이션 프로세스 종료 완료 (PID: {process.Id})");
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, $"프로세스 종료 중 예외 발생 (PID: {process.Id}): {ex.Message}");
+                    logger.LogError(ex, $"애플리케이션 프로세스 종료 중 예외 발생 (PID: {process.Id}): {ex.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"heygent 프로세스 종료 중 오류: {ex.Message}");
+            logger.LogError(ex, $"애플리케이션 프로세스 종료 중 오류: {ex.Message}");
         }
     }
 }

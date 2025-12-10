@@ -103,7 +103,8 @@ class Program
                     services.AddSingleton<YamlConfigHelper>();
                     services.AddSingleton<NetInfoHelper>();
 
-                    services.AddHostedService<Scheduler.CronPollingService>();
+                    services.AddHostedService<Scheduler.FlexSyncService>();
+                    // services.AddHostedService<Scheduler.CronPollingService>();
 
                     //services.AddTransient<FileTransferService>();
                     //services.AddTransient<IFileTransferService>(provider =>

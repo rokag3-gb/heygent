@@ -59,18 +59,18 @@ public class AgentNotificationService : BackgroundService
 
                 try
                 {
-                    _logger.LogInformation($"Notification Job Active Running: InstanceId={_instanceId}, TID={Environment.CurrentManagedThreadId}");
+                    _logger.LogInformation($"Agent Notification Service Job Active Running: InstanceId={_instanceId}, TID={Environment.CurrentManagedThreadId}");
                     
                     // TODO: 실제 알림 발송 로직 구현
                     // 1. 대상 직원 조회 (DB)
                     // 2. 메시지 생성
                     // 3. 발송 (NotificationService 사용)
                     
-                    _logger.LogInformation("Agent notification job logic placeholder.");
+                    // _logger.LogInformation("Agent notification job logic placeholder.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An error occurred during the notification job.");
+                    _logger.LogError(ex, "An error occurred during the Agent Notification job.");
                 }
             }
             else
@@ -83,4 +83,3 @@ public class AgentNotificationService : BackgroundService
         _logger.LogInformation("AgentNotificationService stopped.");
     }
 }
-

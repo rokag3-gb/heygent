@@ -35,10 +35,10 @@ public class YamlConfigHelper
                     schedule = new ScheduleSection
                     {
                         cron_expression_flex_sync = new List<string> {
-                            "* 0/30 * * * *", // 매 30분 마다
+                            "0/10 * * * * *", // 매 10초마다. 배포 때에는 -> (KST 기준) 06:00 ~ 23:00 사이 매 30분 마다
                         },
                         cron_expression_notification = new List<string> {
-                            "* 0/1 8-18 * * *", // 08:00 ~ 18:00 사이 매 1분 마다
+                            "0/5 * * * * *", // 매 5초마다. 배포 때에는 -> (KST 기준) 08:00 ~ 18:00 사이 매 1분 마다
                         },
                         // file_transfer = new List<string> {
                         //     // 초 분 시 일 월 요일
