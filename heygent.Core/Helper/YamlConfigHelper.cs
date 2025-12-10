@@ -63,7 +63,7 @@ public class YamlConfigHelper
                         Minimum Pool Size=0; Maximum Pool Size=100 -> 풀 사이즈 조절
                         CommandTimeout=30 -> 쿼리 타임아웃 설정
                         */
-                        provider = "postgresql"
+                        provider = DatabaseProvider.PostgreSQL,
                     },
                     source = new SourceSection
                     {

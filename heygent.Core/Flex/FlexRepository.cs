@@ -11,7 +11,7 @@ public class FlexRepository
 {
     private readonly ILogger<FlexRepository> _logger;
     private readonly string _connectionString;
-    private readonly string _provider;
+    private readonly DatabaseProvider _provider;
 
     public FlexRepository(ILogger<FlexRepository> logger)
     {
@@ -23,7 +23,7 @@ public class FlexRepository
 
     private IDbConnection CreateConnection()
     {
-        if (_provider.Equals("postgresql", StringComparison.OrdinalIgnoreCase))
+        if (_provider.ToString().Equals("postgresql", StringComparison.OrdinalIgnoreCase))
         {
             return new NpgsqlConnection(_connectionString);
         }
