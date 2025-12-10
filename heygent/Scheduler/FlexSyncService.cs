@@ -21,7 +21,7 @@ public class FlexSyncService : BackgroundService
         _syncManager = syncManager;
 
         // Conf.Current.schedule.flex_sync 파싱
-        Conf.Current.schedule.flex_sync.ForEach(expr =>
+        Conf.Current.schedule.cron_expression_flex_sync.ForEach(expr =>
         {
             if (CronExpression.TryParse(expr, CronFormat.IncludeSeconds, out var parsedCron))
                 _cronExpressions.Add(parsedCron);
