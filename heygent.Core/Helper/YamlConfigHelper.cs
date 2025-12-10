@@ -34,13 +34,36 @@ public class YamlConfigHelper
                 {
                     schedule = new ScheduleSection
                     {
-                        cron_expression = new List<string> {
-                            // 초 분 시 일 월 요일
-                            // "0/30 * 4-19 * * *", // 새벽4시 ~ 오후7시 사이 매 30초 마다
-                            // "* 0/1 * * * *", // 매 1분 마다 (PRD)
-                            "*/10 * * * * *", // 매 10초 마다 (DEV/TEST)
+                        cron_expression_flex_sync = new List<string> {
+                            "* 0/30 * * * *", // 매 30분 마다
                         },
+                        cron_expression_notification = new List<string> {
+                            "* 0/1 8-18 * * *", // 08:00 ~ 18:00 사이 매 1분 마다
+                        },
+                        // file_transfer = new List<string> {
+                        //     // 초 분 시 일 월 요일
+                        //     // "0/30 * 4-19 * * *", // 새벽4시 ~ 오후7시 사이 매 30초 마다
+                        //     // "* 0/1 * * * *", // 매 1분 마다 (PRD)
+                        //     "*/10 * * * * *", // 매 10초 마다 (DEV/TEST)
+                        // },
                         time_zone = TimeZoneInfo.Local.Id // 로컬시간 (OS kernel 시간대)
+                    },
+                    flex = new FlexSection
+                    {
+                        base_url = "https://openapi.flex.team/v2/", // Reference. https://developers.flex.team/reference/integration
+                        refresh_token = FlexSecret.RefreshToken,
+                    },
+                    database = new DatabaseSection
+                    {
+                        //connection_string = "Host=localhost;Port=5432;Database=flex;Username=postgres;Password=your_password;",
+                        connection_string = DatabaseSecret.connection_string,
+                        /*
+                        ## 생략된 속성
+                        Pooling=true -> 커넥션 풀링 사용 (기본값 true)
+                        Minimum Pool Size=0; Maximum Pool Size=100 -> 풀 사이즈 조절
+                        CommandTimeout=30 -> 쿼리 타임아웃 설정
+                        */
+                        provider = "postgresql"
                     },
                     source = new SourceSection
                     {

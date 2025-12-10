@@ -5,6 +5,8 @@ namespace heygent.Core.Model;
 public class AppConfig
 {
     public ScheduleSection schedule { get; set; } = new();
+    public FlexSection flex { get; set; } = new();
+    public DatabaseSection database { get; set; } = new();
     public SourceSection source { get; set; } = new();
     public TargetSection target { get; set; } = new();
     public NotificationSection notification { get; set; } = new();
@@ -13,8 +15,22 @@ public class AppConfig
 
 public class ScheduleSection
 {
-    public List<string> cron_expression { get; set; } = new();
+    public List<string> cron_expression_flex_sync { get; set; } = new();
+    public List<string> cron_expression_notification { get; set; } = new();
+    
     public string time_zone { get; set; } = "Asia/Seoul"; // 기본값은 로컬 시간대
+}
+
+public class FlexSection
+{
+    public string base_url { get; set; } = "https://flex.team/api/v2/";
+    public string refresh_token { get; set; } = "";
+}
+
+public class DatabaseSection
+{
+    public string connection_string { get; set; } = "";
+    public string provider { get; set; } = "postgresql"; // mssql, postgresql
 }
 
 public enum ConnectType
