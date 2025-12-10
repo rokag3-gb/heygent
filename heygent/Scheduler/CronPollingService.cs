@@ -42,7 +42,7 @@ public class CronPollingService : BackgroundService
         //_cronExpressions.Add(CronExpression.Parse("*/5 * * * * *", CronFormat.IncludeSeconds));
 
         // Conf.Current 을 _cronExpressions 으로 변환
-        Conf.Current.schedule.cron_expression.ForEach(expr =>
+        Conf.Current.schedule.cron_expression_flex_sync.ForEach(expr =>
         {
             if (CronExpression.TryParse(expr, CronFormat.IncludeSeconds, out var parsedCron))
                 _cronExpressions.Add(parsedCron);

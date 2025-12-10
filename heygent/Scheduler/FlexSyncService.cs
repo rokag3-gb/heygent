@@ -1,41 +1,43 @@
 using Cronos;
 using heygent.Core;
-using heygent.Core.Notification;
+using heygent.Core.Flex;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace heygent.Scheduler;
 
-public class AgentNotificationService : BackgroundService
+public class FlexSyncService : BackgroundService
 {
-    private readonly ILogger<AgentNotificationService> _logger;
-    private readonly NotificationService _notifier;
+    private readonly ILogger<FlexSyncService> _logger;
+    private readonly FlexSyncManager _syncManager;
     private readonly List<CronExpression> _cronExpressions = new();
     private readonly TimeZoneInfo _timeZone;
     private readonly string _instanceId = Guid.NewGuid().ToString().Substring(36 - 12, 12);
 
-    public AgentNotificationService(ILogger<AgentNotificationService> logger, NotificationService notifier)
+    public FlexSyncService(ILogger<FlexSyncService> logger, FlexSyncManager syncManager)
     {
         _logger = logger;
-        _notifier = notifier;
+        _syncManager = syncManager;
 
-        Conf.Current.schedule.cron_expression_notification.ForEach(expr =>
+        // Conf.Current.schedule.flex_sync 파싱
+        Conf.Current.schedule.flex_sync.ForEach(expr =>
         {
             if (CronExpression.TryParse(expr, CronFormat.IncludeSeconds, out var parsedCron))
                 _cronExpressions.Add(parsedCron);
             else
-                _logger.LogWarning($"Invalid cron expression (notification): {expr}");
+                _logger.LogWarning($"Invalid cron expression (flex_sync): {expr}.");
         });
 
         _timeZone = TimeZoneInfo.FindSystemTimeZoneById(Conf.Current.schedule.time_zone) ?? TimeZoneInfo.Local;
         
         var cronExpressionCsv = string.Join(", ", _cronExpressions.Select(expr => $"[{expr}]"));
-        _logger.LogInformation($"AgentNotificationService initialized. Cron: {cronExpressionCsv}");
+        _logger.LogInformation($"FlexSyncService initialized. Cron: {cronExpressionCsv}, TimeZone: {_timeZone.Id}");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("AgentNotificationService started");
+        _logger.LogInformation("FlexSyncService started");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -48,6 +50,7 @@ public class AgentNotificationService : BackgroundService
 
             if (nextExecutionTimes.Any())
             {
+                // 약간의 딜레이
                 await Task.Delay(200, stoppingToken);
 
                 var nextUtc = nextExecutionTimes.First();
@@ -58,27 +61,23 @@ public class AgentNotificationService : BackgroundService
 
                 try
                 {
-                    _logger.LogInformation($"Notification Job Active Running: InstanceId={_instanceId}, TID={Environment.CurrentManagedThreadId}");
+                    _logger.LogInformation($"FlexSync Active Running: InstanceId={_instanceId}, TID={Environment.CurrentManagedThreadId}");
                     
-                    // TODO: 실제 알림 발송 로직 구현
-                    // 1. 대상 직원 조회 (DB)
-                    // 2. 메시지 생성
-                    // 3. 발송 (NotificationService 사용)
-                    
-                    _logger.LogInformation("Agent notification job logic placeholder.");
+                    await _syncManager.SyncAllAsync();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An error occurred during the notification job.");
+                    _logger.LogError(ex, "An error occurred during the Flex sync job.");
                 }
             }
             else
             {
+                // 실행할 스케줄이 없으면 긴 대기
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
         
-        _logger.LogInformation("AgentNotificationService stopped.");
+        _logger.LogInformation("FlexSyncService stopped.");
     }
 }
 
