@@ -48,6 +48,7 @@ public class AgentNotificationService : BackgroundService
 
             if (nextExecutionTimes.Any())
             {
+                // 바로 실행하면 loop가 과열될 수 있기 때문에 의도적으로 짧은 backoff delay (0.2초) 설정
                 await Task.Delay(200, stoppingToken);
 
                 var nextUtc = nextExecutionTimes.First();
@@ -74,6 +75,7 @@ public class AgentNotificationService : BackgroundService
             }
             else
             {
+                // 실행할 스케줄이 없으면 긴 대기
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
