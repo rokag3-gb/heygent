@@ -18,3 +18,4 @@ set col2 = 'Test2'
 where col1 = 2;
 
 delete from hr.tbl_test1 where col1 = 3;
+

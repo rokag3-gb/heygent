@@ -23,24 +23,5 @@ ON SEQUENCES TO flex_app;
 SHOW search_path;
 ALTER ROLE flex_app SET search_path = hr, public;
 
-
-create table hr.tbl_test1
-(
-    col1 BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    /*
-    col1 bigserial generated always as identity
-        constraint tbl_test1_pk
-       primary key,
-    */
-    col2 varchar(100)
-);
-
-select * from hr.tbl_test1;
-
-insert into hr.tbl_test1 (col2) values ('테스트3');
-
-update hr.tbl_test1
-set col2 = 'Test2'
-where col1 = 2;
-
-delete from hr.tbl_test1 where col1 = 3;
+-- 패스워드 변경
+ALTER USER postgres WITH PASSWORD '{your-Strong-Password-Ever}';
