@@ -17,14 +17,17 @@ class Program
             // ASCII Art 출력
             Console.WriteLine(new string('=', 54));
             Console.WriteLine("");
-            Console.WriteLine(@"            _        ____       _     _");
-            Console.WriteLine(@"      /\   (_)      |  _ \     (_)   | |");
-            Console.WriteLine(@"     /  \   _ _ __  | |_) |_ __ _  __| | __ _  ___");
-            Console.WriteLine(@"    / /\ \ | | '__| |  _ <| '__| |/ _` |/ _` |/ _ \");
-            Console.WriteLine(@"   / ____ \| | |    | |_) | |  | | (_| | (_| |  __/");
-            Console.WriteLine(@"  /_/    \_\_|_|    |____/|_|  |_|\__,_|\__, |\___|");
-            Console.WriteLine(@"                                         __/ |");
-            Console.WriteLine(@"                                        |___/");
+            Console.WriteLine(@"$$\   $$\ $$$$$$$$\ $$\     $$\                              $$\     ");
+            Console.WriteLine(@"$$ |  $$ |$$  _____|\$$\   $$  |                             $$ |    ");
+            Console.WriteLine(@"$$ |  $$ |$$ |       \$$\ $$  /$$$$$$\   $$$$$$\  $$$$$$$\ $$$$$$\   ");
+            Console.WriteLine(@"$$$$$$$$ |$$$$$\      \$$$$  /$$  __$$\ $$  __$$\ $$  __$$\\_$$  _|  ");
+            Console.WriteLine(@"$$  __$$ |$$  __|      \$$  / $$ /  $$ |$$$$$$$$ |$$ |  $$ | $$ |    ");
+            Console.WriteLine(@"$$ |  $$ |$$ |          $$ |  $$ |  $$ |$$   ____|$$ |  $$ | $$ |$$\ ");
+            Console.WriteLine(@"$$ |  $$ |$$$$$$$$\     $$ |  \$$$$$$$ |\$$$$$$$\ $$ |  $$ | \$$$$  |");
+            Console.WriteLine(@"\__|  \__|\________|    \__|   \____$$ | \_______|\__|  \__|  \____/ ");
+            Console.WriteLine(@"                              $$\   $$ |                             ");
+            Console.WriteLine(@"                              \$$$$$$  |                             ");
+            Console.WriteLine(@"                               \______/                              ");
             Console.WriteLine("");
             Console.WriteLine(new string('=', 54));
             Console.WriteLine("");
@@ -156,7 +159,7 @@ class Program
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "heygent 시작 중 오류가 발생했습니다.");
+            Log.Fatal(ex, "애플리케이션 시작 중 오류가 발생했습니다.");
         }
         finally
         {

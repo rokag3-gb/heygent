@@ -6,15 +6,15 @@ public static class AssemblyInfo
     // string Name => "abc"; -> "property". getter only
     // string Name = "abc"; -> "field". 그냥 변수 그 잡채
 
-    public static string Title { get; } = "heygent";
-    public static string Product { get; } = "heygent";
-    public static string Description { get; } = "Fast, Light and Reliable Data Bridge Service";
-    public static string Company { get; } = "Next Securities";
+    public static string Title { get; } = "HEYgent";
+    public static string Product { get; } = "HEYgent";
+    public static string Description { get; } = "People-Aware HR Agent";
+    public static string Company { get; } = "HR Hunters - Next Securities";
     public static string Copyright { get; } = $"Copyright © {DateTime.Now.Year} {Company}. All rights reserved.";
-    public static string Manager { get; } = "Jung Woo kim (Engineering Team)";
+    public static string Manager { get; } = "Jung Woo kim (Derivatives Trading Platform Team)";
     public static int HeadVer_Major { get; } = 1;
     public static int HeadVer_YearMonth { get; } = 2512;
-    public static int HeadVer_Build { get; } = 8;
+    public static int HeadVer_Build { get; } = 24;
     public static string HeadVer { get; } = $"{HeadVer_Major}.{HeadVer_YearMonth}.{HeadVer_Build}";
 
     /// <summary>
