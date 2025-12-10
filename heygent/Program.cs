@@ -120,9 +120,9 @@ class Program
                     services.AddSingleton<Core.Notification.NotificationService>();
 
                     // Flex 관련 서비스 등록
-                    services.AddHttpClient<heygent.Core.Flex.FlexApiClient>();
-                    services.AddSingleton<heygent.Core.Flex.FlexRepository>();
-                    services.AddSingleton<heygent.Core.Flex.FlexSyncManager>();
+                    // services.AddHttpClient<heygent.Core.Flex.FlexApiClient>();
+                    services.AddSingleton<Core.Flex.FlexRepository>();
+                    services.AddSingleton<Core.Flex.FlexSyncManager>();
 
                     // 스케줄러 등록
                     services.AddHostedService<Scheduler.FlexSyncService>();
