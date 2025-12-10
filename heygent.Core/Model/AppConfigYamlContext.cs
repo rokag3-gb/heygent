@@ -15,6 +15,10 @@ namespace heygent.Core.Model;
 [YamlSerializable(typeof(AwakerSection))]
 [YamlSerializable(typeof(ConnectType))]
 [YamlSerializable(typeof(NotificationType))]
+[YamlSerializable(typeof(DatabaseProvider))]
+[YamlSerializable(typeof(FlexSection))]
+[YamlSerializable(typeof(DatabaseSection))]
+
 public partial class AppConfigYamlContext : StaticContext
 {
 }
