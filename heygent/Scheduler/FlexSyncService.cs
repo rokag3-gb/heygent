@@ -3,6 +3,7 @@ using heygent.Core;
 using heygent.Core.Flex;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 
 namespace heygent.Scheduler;
@@ -10,17 +11,17 @@ namespace heygent.Scheduler;
 public class FlexSyncService : BackgroundService
 {
     private readonly ILogger<FlexSyncService> _logger;
-    private readonly FlexSyncManager _syncManager;
+    private readonly IServiceProvider _serviceProvider;
     private readonly List<CronExpression> _cronExpressions = new();
     private readonly TimeZoneInfo _timeZone;
     private readonly string _instanceId = Guid.NewGuid().ToString().Substring(36 - 12, 12);
 
-    public FlexSyncService(ILogger<FlexSyncService> logger, FlexSyncManager syncManager)
+    public FlexSyncService(ILogger<FlexSyncService> logger, IServiceProvider serviceProvider)
     {
         _logger = logger;
-        _syncManager = syncManager;
+        _serviceProvider = serviceProvider;
 
-        // Conf.Current.schedule.flex_sync 파싱
+        // Conf.Current.schedule.cron_expression_flex_sync 파싱
         Conf.Current.schedule.cron_expression_flex_sync.ForEach(expr =>
         {
             if (CronExpression.TryParse(expr, CronFormat.IncludeSeconds, out var parsedCron))
@@ -63,7 +64,12 @@ public class FlexSyncService : BackgroundService
                 {
                     _logger.LogInformation($"FlexSync Active Running: InstanceId={_instanceId}, TID={Environment.CurrentManagedThreadId}");
                     
-                    await _syncManager.SyncAllAsync();
+                    // Create Scope & Resolve Service
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var syncManager = scope.ServiceProvider.GetRequiredService<FlexSyncManager>();
+                        await syncManager.SyncAllAsync();
+                    }
                 }
                 catch (Exception ex)
                 {
