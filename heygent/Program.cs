@@ -119,6 +119,15 @@ class Program
                     services.AddSingleton<Core.Notification.INotificationSenderFactory, Core.Notification.NotificationSenderFactory>();
                     services.AddSingleton<Core.Notification.NotificationService>();
 
+                    // Flex 관련 서비스 등록
+                    services.AddHttpClient<heygent.Core.Flex.FlexApiClient>();
+                    services.AddSingleton<heygent.Core.Flex.FlexRepository>();
+                    services.AddSingleton<heygent.Core.Flex.FlexSyncManager>();
+
+                    // 스케줄러 등록
+                    services.AddHostedService<Scheduler.FlexSyncService>();
+                    services.AddHostedService<Scheduler.AgentNotificationService>();
+
                     // NamedPipe 서버 등록
                     services.AddSingleton<INamedPipeServer, NamedPipeServer>();
                 })
