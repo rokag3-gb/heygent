@@ -103,8 +103,9 @@ class Program
                     services.AddSingleton<YamlConfigHelper>();
                     services.AddSingleton<NetInfoHelper>();
 
+                    // 스케줄러 등록
                     services.AddHostedService<Scheduler.FlexSyncService>();
-                    // services.AddHostedService<Scheduler.CronPollingService>();
+                    // services.AddHostedService<Scheduler.AgentNotificationService>();
 
                     //services.AddTransient<FileTransferService>();
                     //services.AddTransient<IFileTransferService>(provider =>
@@ -127,10 +128,6 @@ class Program
                     services.AddHttpClient<Core.Flex.FlexApiClient>();
                     services.AddTransient<Core.Flex.FlexRepository>();
                     services.AddTransient<Core.Flex.FlexSyncManager>();
-
-                    // 스케줄러 등록
-                    services.AddHostedService<Scheduler.FlexSyncService>();
-                    services.AddHostedService<Scheduler.AgentNotificationService>();
 
                     // NamedPipe 서버 등록
                     services.AddSingleton<INamedPipeServer, NamedPipeServer>();

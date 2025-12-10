@@ -19,3 +19,8 @@ where col1 = 2;
 
 delete from hr.tbl_test1 where col1 = 3;
 
+select * from hr.flex_employee;
+
+insert into hr.flex_employee (user_id, name, email, employee_number, organization_code)
+values ('227699', '홍길동', 'jwoo.kim@nextsecurities.com', 'employee_number', 'organization_code');
+

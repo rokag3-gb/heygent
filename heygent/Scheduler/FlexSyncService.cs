@@ -97,8 +97,8 @@ public class FlexSyncService : BackgroundService
                     // Create Scope & Resolve Service
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        // var syncManager = scope.ServiceProvider.GetRequiredService<FlexSyncManager>();
-                        // await syncManager.SyncAllAsync();
+                        var syncManager = scope.ServiceProvider.GetRequiredService<FlexSyncManager>();
+                        await syncManager.SyncAllAsync();
                     }
                 }
                 catch (Exception ex)
