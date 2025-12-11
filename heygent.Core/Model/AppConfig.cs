@@ -25,6 +25,8 @@ public class FlexSection
 {
     public string base_url { get; set; } = "https://flex.team/api/v2/";
     public string refresh_token { get; set; } = "ey213e98dhj1289d128eh187d872dh1236dgh3r10d91j2fkesdofi2398rth8172hd7b18c2358hrf87en82nf827n3nc329m23j95";
+    // public string access_key { get; set; } = "";
+    // public string secret_key { get; set; } = "";
 }
 
 public class DatabaseSection

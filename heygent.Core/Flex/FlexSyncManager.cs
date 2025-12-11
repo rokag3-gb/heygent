@@ -21,32 +21,35 @@ public class FlexSyncManager
 
         try 
         {
-            // 테이블 존재 여부 확인 및 생성 (IF NOT EXISTS)
+            // 테이블 존재 여부 확인 및 생성 (CREATE TABLE IF NOT EXISTS)
             await _repository.EnsureTablesAsync();
 
+            // 0. access_token 발급
+            await _client.AuthenticateAsync();
+
             // 1. 조직 동기화
-            _logger.LogInformation("Syncing Organizations...");
-            var orgs = await _client.GetOrganizationsAsync();
-            await _repository.SaveOrganizationsAsync(orgs);
-            _logger.LogInformation($"Synced {orgs.Count} Organizations.");
+            // _logger.LogInformation("Syncing Organizations...");
+            // var orgs = await _client.GetOrganizationsAsync();
+            // await _repository.SaveOrganizationsAsync(orgs);
+            // _logger.LogInformation($"Synced {orgs.Count} Organizations.");
 
             // 2. 사원 동기화
-            _logger.LogInformation("Syncing Employees...");
-            var employees = await _client.GetEmployeesAsync();
-            await _repository.SaveEmployeesAsync(employees);
-            _logger.LogInformation($"Synced {employees.Count} Employees.");
+            // _logger.LogInformation("Syncing Employees...");
+            // var employees = await _client.GetEmployeesAsync();
+            // await _repository.SaveEmployeesAsync(employees);
+            // _logger.LogInformation($"Synced {employees.Count} Employees.");
             
             // 3. 휴가/휴직 동기화
-            _logger.LogInformation("Syncing Leaves...");
-            var leaves = await _client.GetLeavesAsync();
-            await _repository.SaveLeavesAsync(leaves);
-            _logger.LogInformation($"Synced {leaves.Count} Leaves.");
+            // _logger.LogInformation("Syncing Leaves...");
+            // var leaves = await _client.GetLeavesAsync();
+            // await _repository.SaveLeavesAsync(leaves);
+            // _logger.LogInformation($"Synced {leaves.Count} Leaves.");
 
             // 4. 근무 스케줄 동기화
-            _logger.LogInformation("Syncing Work Schedules...");
-            var schedules = await _client.GetWorkSchedulesAsync();
-            await _repository.SaveWorkSchedulesAsync(schedules);
-            _logger.LogInformation($"Synced {schedules.Count} Work Schedules.");
+            // _logger.LogInformation("Syncing Work Schedules...");
+            // var schedules = await _client.GetWorkSchedulesAsync();
+            // await _repository.SaveWorkSchedulesAsync(schedules);
+            // _logger.LogInformation($"Synced {schedules.Count} Work Schedules.");
 
             _logger.LogInformation("Flex data sync completed successfully.");
         }

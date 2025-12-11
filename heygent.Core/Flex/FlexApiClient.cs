@@ -3,6 +3,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 using heygent.Core.Flex.Dto;
+using heygent.Core.Credential;
 using heygent.Core.Model;
 
 namespace heygent.Core.Flex;
@@ -11,12 +12,14 @@ public class FlexApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<FlexApiClient> _logger;
+    private readonly FlexRepository _repository;
     private string _accessToken = "";
     
-    public FlexApiClient(HttpClient httpClient, ILogger<FlexApiClient> logger)
+    public FlexApiClient(HttpClient httpClient, ILogger<FlexApiClient> logger, FlexRepository repository)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _repository = repository;
         
         var baseUrl = Conf.Current.flex.base_url;
         if (!string.IsNullOrEmpty(baseUrl))
@@ -31,53 +34,58 @@ public class FlexApiClient
         // AccessToken이 없으면 발급 시도
         if (string.IsNullOrEmpty(_accessToken)) 
         {
-            await RefreshTokenAsync();
+            await AuthenticateAsync();
         }
     }
 
-    private async Task RefreshTokenAsync()
+    public async Task AuthenticateAsync()
     {
-        var refreshToken = Conf.Current.flex.refresh_token;
-        if (string.IsNullOrEmpty(refreshToken))
-        {
-            throw new Exception("Flex Refresh Token is empty.");
-        }
+        var url = $"{Conf.Current.flex.base_url}auth/realms/open-api/protocol/openid-connect/token";
 
-        // Flex API 스펙에 맞게 조정 필요 (예시: POST /oauth/token)
-        var requestBody = new
+        // 요청 준비
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        var formData = new List<KeyValuePair<string, string>>
         {
-            grant_type = "refresh_token",
-            refresh_token = refreshToken
+            new KeyValuePair<string, string>("client_id", "open-api"),
+            new KeyValuePair<string, string>("grant_type", "refresh_token"),
+            new KeyValuePair<string, string>("refresh_token", Conf.Current.flex.refresh_token),
         };
+        var content = new FormUrlEncodedContent(formData);
+        request.Content = content;
 
-        var content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
+        // Logging을 위해서 request body 문자열 생성
+        var requestBodyStr = await content.ReadAsStringAsync();
         
-        try 
+        // 요청 log insert
+        var logId = await _repository.InsertApiLogRequestAsync(url, "POST", request.Headers.ToString(), requestBodyStr);
+
+        try
         {
-            // 실제 인증 URL은 문서 확인 필요. 여기서는 예시로 작성.
-            // 사용자가 "flex API 에서 특정 URL 로 refresh_token 을 POST 하면 access_token 을 주거든" 이라고 함.
-            var response = await _httpClient.PostAsync("oauth/token", content); 
-            
+            // Request!!
+            var response = await _httpClient.SendAsync(request);
+
+            // Read response
+            var responseString = await response.Content.ReadAsStringAsync();
+            var statusCode = response.StatusCode.ToString();
+
+            // 응답 log update
+            await _repository.UpdateApiLogResponseAsync(logId, statusCode.ToString(), responseString);
+
+            // 실패 응답 시 예외 throw
             if (!response.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Token refresh failed. Status: {response.StatusCode}, Content: {errorContent}");
-                throw new HttpRequestException($"Token refresh failed: {response.StatusCode}");
+                 _logger.LogError($"Authentication failed. Status: {statusCode}, Content: {responseString}");
+                 throw new HttpRequestException($"Authentication failed: {statusCode}");
             }
 
-            var responseString = await response.Content.ReadAsStringAsync();
+            // 응답을 FlexAuthResponseDto 으로 deserialize
             var authResponse = JsonConvert.DeserializeObject<FlexAuthResponseDto>(responseString);
 
+            // 응답에서 access_token 추출
             if (authResponse != null && !string.IsNullOrEmpty(authResponse.access_token))
             {
                 _accessToken = authResponse.access_token;
-                _logger.LogInformation("Flex Access Token refreshed.");
-
-                // 갱신된 refresh_token이 있다면 업데이트 (Optional)
-                if (!string.IsNullOrEmpty(authResponse.refresh_token))
-                {
-                    Conf.Current.flex.refresh_token = authResponse.refresh_token;
-                }
+                _logger.LogInformation("Flex Access Token obtained successfully.");
                 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _accessToken);
             }
@@ -88,8 +96,8 @@ public class FlexApiClient
         }
         catch (Exception ex)
         {
-             _logger.LogError(ex, "Failed to refresh access token.");
-             throw;
+            _logger.LogError(ex, "Failed to authenticate.");
+            throw;
         }
     }
 
@@ -102,8 +110,8 @@ public class FlexApiClient
         // 401 Unauthorized 발생 시 토큰 갱신 후 1회 재시도
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            _logger.LogWarning("Unauthorized access. Retrying after token refresh...");
-            await RefreshTokenAsync();
+            _logger.LogWarning("Unauthorized access. Retrying after authentication...");
+            await AuthenticateAsync();
             response = await _httpClient.GetAsync(uri);
         }
 
@@ -133,4 +141,3 @@ public class FlexApiClient
         return await GetAsync<List<FlexWorkScheduleDto>>("v2/work-schedules");
     }
 }
-

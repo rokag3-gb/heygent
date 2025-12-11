@@ -78,7 +78,7 @@ public class FlexRepository
 
             CREATE TABLE IF NOT EXISTS hr.flex_api_log (
                 id SERIAL PRIMARY KEY,
-                request_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                request_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 url TEXT,
                 method VARCHAR(10),
                 status_code VARCHAR(10),
@@ -265,14 +265,24 @@ public class FlexRepository
         using var conn = CreateConnection();
         conn.Open();
         
-        // request_at은 DB DEFAULT 사용
-        var id = await conn.ExecuteScalarAsync<int>(
-            @"INSERT INTO hr.flex_api_log (url, method, request_header, request_body)
-              VALUES (@url, @method, @requestHeader, @requestBody)
-              RETURNING id",
-            new { url, method, requestHeader, requestBody });
-            
-        return id;
+        // AOT Compatibility: Use NpgsqlCommand directly instead of Dapper
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var cmd = new NpgsqlCommand(@"INSERT INTO hr.flex_api_log (url, method, request_header, request_body)
+                                              VALUES (@url, @method, @requestHeader, @requestBody)
+                                              RETURNING id", npgsqlConn);
+            cmd.Parameters.AddWithValue("url", url ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("method", method ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("requestHeader", requestHeader ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("requestBody", requestBody ?? (object)DBNull.Value);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
     }
 
     public async Task UpdateApiLogResponseAsync(int id, string statusCode, string responseBody)
@@ -280,12 +290,23 @@ public class FlexRepository
         using var conn = CreateConnection();
         conn.Open();
 
-        await conn.ExecuteAsync(
-            @"UPDATE hr.flex_api_log
-              SET status_code = @statusCode,
-                  response_body = @responseBody,
-                  response_at = CURRENT_TIMESTAMP
-              WHERE id = @id",
-            new { id, statusCode, responseBody });
+        // AOT Compatibility: Use NpgsqlCommand directly instead of Dapper
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var cmd = new NpgsqlCommand(@"UPDATE hr.flex_api_log
+                                              SET status_code = @statusCode,
+                                                  response_body = @responseBody,
+                                                  response_at = CURRENT_TIMESTAMP
+                                              WHERE id = @id", npgsqlConn);
+            cmd.Parameters.AddWithValue("id", id);
+            cmd.Parameters.AddWithValue("statusCode", statusCode ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("responseBody", responseBody ?? (object)DBNull.Value);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
     }
 }
