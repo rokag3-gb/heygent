@@ -75,6 +75,18 @@ public class FlexRepository
                 end_time VARCHAR(20),
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_api_log (
+                id SERIAL PRIMARY KEY,
+                request_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                url TEXT,
+                method VARCHAR(10),
+                status_code VARCHAR(10),
+                request_header VARCHAR(255),
+                request_body TEXT,
+                response_body TEXT,
+                response_at TIMESTAMP
+            );
         ";
 
         await conn.ExecuteAsync(sql);
@@ -247,5 +259,33 @@ public class FlexRepository
             throw;
         }
     }
-}
 
+    public async Task<int> InsertApiLogRequestAsync(string url, string method, string requestHeader, string requestBody)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+        
+        // request_at은 DB DEFAULT 사용
+        var id = await conn.ExecuteScalarAsync<int>(
+            @"INSERT INTO hr.flex_api_log (url, method, request_header, request_body)
+              VALUES (@url, @method, @requestHeader, @requestBody)
+              RETURNING id",
+            new { url, method, requestHeader, requestBody });
+            
+        return id;
+    }
+
+    public async Task UpdateApiLogResponseAsync(int id, string statusCode, string responseBody)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+
+        await conn.ExecuteAsync(
+            @"UPDATE hr.flex_api_log
+              SET status_code = @statusCode,
+                  response_body = @responseBody,
+                  response_at = CURRENT_TIMESTAMP
+              WHERE id = @id",
+            new { id, statusCode, responseBody });
+    }
+}
