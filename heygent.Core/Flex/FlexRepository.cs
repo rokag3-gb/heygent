@@ -41,41 +41,6 @@ public class FlexRepository
         // 아주 심플한 DDL (ANSI SQL 데이터 타입 사용 지향)
         // PostgreSQL: VARCHAR, TEXT, TIMESTAMP 등
         var sql = @"
-            CREATE TABLE IF NOT EXISTS hr.flex_organization (
-                code VARCHAR(100) PRIMARY KEY,
-                name VARCHAR(200),
-                parent_code VARCHAR(100),
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS hr.flex_employee (
-                user_id VARCHAR(100) PRIMARY KEY,
-                name VARCHAR(100),
-                email VARCHAR(200),
-                employee_number VARCHAR(100),
-                organization_code VARCHAR(100),
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS hr.flex_leave (
-                leave_id VARCHAR(100) PRIMARY KEY,
-                user_id VARCHAR(100),
-                type VARCHAR(100),
-                start_date TIMESTAMP,
-                end_date TIMESTAMP,
-                status VARCHAR(50),
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS hr.flex_work_schedule (
-                schedule_id VARCHAR(100) PRIMARY KEY,
-                user_id VARCHAR(100),
-                work_date TIMESTAMP, -- date 예약어 피함
-                start_time VARCHAR(20),
-                end_time VARCHAR(20),
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
             CREATE TABLE IF NOT EXISTS hr.flex_api_log (
                 id SERIAL PRIMARY KEY,
                 request_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -290,7 +255,6 @@ public class FlexRepository
         using var conn = CreateConnection();
         conn.Open();
 
-        // AOT Compatibility: Use NpgsqlCommand directly instead of Dapper
         if (conn is NpgsqlConnection npgsqlConn)
         {
             using var cmd = new NpgsqlCommand(@"UPDATE hr.flex_api_log
