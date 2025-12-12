@@ -64,6 +64,32 @@ public class FlexRepository
                 sort_order TEXT,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_department_head (
+                id SERIAL PRIMARY KEY,
+                department_code VARCHAR(30) NOT NULL,
+                user_id VARCHAR(50) NOT NULL,
+                is_direct BOOLEAN NOT NULL DEFAULT false,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_jobRoleCode (
+                jobRoleCode VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(200),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_jobRankCode (
+                jobRankCode VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(200),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_jobTitleCode (
+                jobTitleCode VARCHAR(50) PRIMARY KEY,
+                name VARCHAR(200),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         ";
 
         await conn.ExecuteAsync(sql);
@@ -184,6 +210,175 @@ public class FlexRepository
                         await insertCmd.ExecuteNonQueryAsync();
                     }
                 }
+                trans.Commit();
+            }
+            catch
+            {
+                trans.Rollback();
+                throw;
+            }
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
+    }
+
+    public async Task<List<string>> GetAllDepartmentCodesAsync()
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+
+        var result = new List<string>();
+
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var cmd = new NpgsqlCommand("SELECT department_code FROM hr.flex_department", npgsqlConn);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (!reader.IsDBNull(0))
+                {
+                    result.Add(reader.GetString(0));
+                }
+            }
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
+
+        return result;
+    }
+
+    public async Task SaveDepartmentHeadsAsync(List<FlexDepartmentHeadResponseDto> items)
+    {
+        if (items == null || !items.Any()) return;
+
+        using var conn = CreateConnection();
+        conn.Open();
+
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var trans = npgsqlConn.BeginTransaction();
+            try
+            {
+                foreach (var item in items)
+                {
+                    // 1. Delete existing heads for this department
+                    using (var deleteCmd = new NpgsqlCommand("DELETE FROM hr.flex_department_head WHERE department_code = @departmentCode", npgsqlConn, trans))
+                    {
+                        deleteCmd.Parameters.AddWithValue("departmentCode", item.departmentCode);
+                        await deleteCmd.ExecuteNonQueryAsync();
+                    }
+
+                    // 2. Insert Direct Heads
+                    if (item.directHeadUsers != null)
+                    {
+                        foreach (var head in item.directHeadUsers)
+                        {
+                            using var insertCmd = new NpgsqlCommand(
+                                @"INSERT INTO hr.flex_department_head (department_code, user_id, is_direct, updated_at)
+                                  VALUES (@departmentCode, @userId, true, CURRENT_TIMESTAMP)", npgsqlConn, trans);
+                            
+                            insertCmd.Parameters.AddWithValue("departmentCode", item.departmentCode);
+                            insertCmd.Parameters.AddWithValue("userId", head.employeeNumber);
+                            await insertCmd.ExecuteNonQueryAsync();
+                        }
+                    }
+
+                    // 3. Insert Resolved Heads (indirect)
+                    if (item.resolvedHeadUsers != null)
+                    {
+                        foreach (var head in item.resolvedHeadUsers)
+                        {
+                             // Exclude if already inserted as direct
+                             bool isDirect = item.directHeadUsers?.Any(d => d.employeeNumber == head.employeeNumber) ?? false;
+                             if (!isDirect)
+                             {
+                                using var insertCmd = new NpgsqlCommand(
+                                    @"INSERT INTO hr.flex_department_head (department_code, user_id, is_direct, updated_at)
+                                      VALUES (@departmentCode, @userId, false, CURRENT_TIMESTAMP)", npgsqlConn, trans);
+                                
+                                insertCmd.Parameters.AddWithValue("departmentCode", item.departmentCode);
+                                insertCmd.Parameters.AddWithValue("userId", head.employeeNumber);
+                                await insertCmd.ExecuteNonQueryAsync();
+                             }
+                        }
+                    }
+                }
+                trans.Commit();
+            }
+            catch
+            {
+                trans.Rollback();
+                throw;
+            }
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
+    }
+
+    public async Task SaveJobItemsAsync(FlexJobItemsResponseDto data)
+    {
+        using var conn = CreateConnection();
+        conn.Open();
+
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var trans = npgsqlConn.BeginTransaction();
+            try
+            {
+                // 1. Job Roles
+                if (data.jobRoles != null)
+                {
+                    foreach (var item in data.jobRoles)
+                    {
+                        using var cmd = new NpgsqlCommand(
+                            @"INSERT INTO hr.flex_jobRoleCode (jobRoleCode, name, updated_at)
+                              VALUES (@code, @name, CURRENT_TIMESTAMP)
+                              ON CONFLICT (jobRoleCode) 
+                              DO UPDATE SET name = EXCLUDED.name, updated_at = CURRENT_TIMESTAMP", npgsqlConn, trans);
+                        cmd.Parameters.AddWithValue("code", item.jobRoleCode);
+                        cmd.Parameters.AddWithValue("name", item.name);
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // 2. Job Ranks
+                if (data.jobRanks != null)
+                {
+                    foreach (var item in data.jobRanks)
+                    {
+                        using var cmd = new NpgsqlCommand(
+                            @"INSERT INTO hr.flex_jobRankCode (jobRankCode, name, updated_at)
+                              VALUES (@code, @name, CURRENT_TIMESTAMP)
+                              ON CONFLICT (jobRankCode) 
+                              DO UPDATE SET name = EXCLUDED.name, updated_at = CURRENT_TIMESTAMP", npgsqlConn, trans);
+                        cmd.Parameters.AddWithValue("code", item.jobRankCode);
+                        cmd.Parameters.AddWithValue("name", item.name);
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                // 3. Job Titles
+                if (data.jobTitles != null)
+                {
+                    foreach (var item in data.jobTitles)
+                    {
+                        using var cmd = new NpgsqlCommand(
+                            @"INSERT INTO hr.flex_jobTitleCode (jobTitleCode, name, updated_at)
+                              VALUES (@code, @name, CURRENT_TIMESTAMP)
+                              ON CONFLICT (jobTitleCode) 
+                              DO UPDATE SET name = EXCLUDED.name, updated_at = CURRENT_TIMESTAMP", npgsqlConn, trans);
+                        cmd.Parameters.AddWithValue("code", item.jobTitleCode);
+                        cmd.Parameters.AddWithValue("name", item.name);
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
                 trans.Commit();
             }
             catch

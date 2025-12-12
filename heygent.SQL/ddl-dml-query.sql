@@ -1,12 +1,16 @@
 
-select * from hr.flex_api_log order by id desc limit 5;
+select * from hr.flex_api_log order by id desc limit 10;
 
 --DROP TABLE hr.flex_department;
+--delete from hr.flex_department;
 select * from hr.flex_department where name like '엔지니어링%'
-         where visible = true;
+where visible = true;
 
+select * from hr.flex_department_head;
 
-
+select * from hr.flex_jobRoleCode;
+select * from hr.flex_jobRankCode;
+select * from hr.flex_jobTitleCode;
 
 
 /*

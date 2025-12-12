@@ -34,9 +34,11 @@ public class FlexSyncManager
 
             // 조직 조직장 (department-heads)
             // 조직 조직장 조회 (Get all department heads) - https://developers.flex.team/reference/getdepartmentsheads
+            await _client.FetchAndSaveDepartmentHeadsAsync();
 
             // 직무·직위·직책 (job-items)
             // 직무·직위·직책 목록 조회 (Get all job items) - https://developers.flex.team/reference/job-items-get-all-job-items
+            await _client.FetchAndSaveJobItemsAsync();
 
             // 구성원 (users)
             // 사번 목록 조회 (Get user employee numbers) - https://developers.flex.team/reference/users-get-employee-numbers

@@ -102,7 +102,7 @@ public class FlexApiClient
 
     public async Task FetchAndSaveDepartmentsAsync()
     {
-        await EnsureAccessTokenAsync();
+        await EnsureAccessTokenAsync(); // AccessToken이 없으면 발급 시도
 
         var url = $"{Conf.Current.flex.base_url}/departments/all";
         var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -129,24 +129,16 @@ public class FlexApiClient
             {
                 var token = JToken.Parse(responseString);
 
-                if (token is JArray)
+                items = token switch
                 {
-                    items = token.ToObject<List<FlexDepartmentDto>>();
-                }
-                else if (token is JObject jObj)
+                    JArray array => array.ToObject<List<FlexDepartmentDto>>(), // [...] 으로 감싸져있는 경우
+                    JObject obj when obj["departments"] != null => obj["departments"]?.ToObject<List<FlexDepartmentDto>>(), // "departments" 키로 감싸져있는 경우
+                    _ => null,
+                };
+
+                if (items == null)
                 {
-                    if (jObj["departments"] != null)
-                    {
-                        items = jObj["departments"]?.ToObject<List<FlexDepartmentDto>>();
-                    }
-                    else if (jObj["content"] != null)
-                    {
-                        items = jObj["content"]?.ToObject<List<FlexDepartmentDto>>();
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Unknown response structure for departments.");
-                    }
+                    _logger.LogWarning("Unknown response structure for departments.");
                 }
             }
             catch (JsonException ex)
@@ -165,6 +157,139 @@ public class FlexApiClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching/saving departments.");
+            throw;
+        }
+    }
+
+    public async Task FetchAndSaveDepartmentHeadsAsync()
+    {
+        await EnsureAccessTokenAsync(); // AccessToken이 없으면 발급 시도
+
+        // 1. Get all department codes from DB
+        var departmentCodes = await _repository.GetAllDepartmentCodesAsync();
+        if (!departmentCodes.Any())
+        {
+            _logger.LogInformation("No departments found to fetch heads.");
+            return;
+        }
+
+        // 2. Process in batches of 20
+        const int batchSize = 20;
+        int totalSaved = 0;
+
+        for (int i = 0; i < departmentCodes.Count; i += batchSize)
+        {
+            var batch = departmentCodes.Skip(i).Take(batchSize);
+            var departmentCodesCsv = string.Join(",", batch);
+            
+            var url = $"{Conf.Current.flex.base_url}/departments/heads";
+            var requestUrl = $"{url}?departmentCodes={departmentCodesCsv}";
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+            
+            var logId = await _repository.InsertApiLogRequestAsync(url, "GET", $"departmentCodes={departmentCodesCsv}");
+
+            try
+            {
+                var response = await _httpClient.SendAsync(request);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var statusCode = response.StatusCode.ToString();
+
+                await _repository.UpdateApiLogResponseAsync(logId, statusCode, responseString);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"Failed to fetch department heads. Status: {statusCode}, Content: {responseString}");
+                    throw new HttpRequestException($"Failed to fetch department heads: {statusCode}");
+                }
+
+                List<FlexDepartmentHeadResponseDto>? items = null;
+                
+                try 
+                {
+                    var token = JToken.Parse(responseString);
+
+                    items = token switch
+                    {
+                        JArray array => array.ToObject<List<FlexDepartmentHeadResponseDto>>(),
+                        JObject obj when obj["departments"] != null => obj["departments"]?.ToObject<List<FlexDepartmentHeadResponseDto>>(),
+                        _ => null
+                    };
+
+                    if (items == null)
+                    {
+                        _logger.LogWarning("Unknown response structure for department heads.");
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "JSON parsing failed for department heads.");
+                }
+
+                if (items != null && items.Any())
+                {
+                    await _repository.SaveDepartmentHeadsAsync(items);
+                    totalSaved += items.Count;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching/saving department heads.");
+                throw;
+            }
+        }
+
+        _logger.LogInformation($"Saved heads for total {totalSaved} departments (processed in batches).");
+    }
+
+    public async Task FetchAndSaveJobItemsAsync()
+    {
+        await EnsureAccessTokenAsync();
+
+        var url = $"{Conf.Current.flex.base_url}/job-items/all";
+        
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        
+        var logId = await _repository.InsertApiLogRequestAsync(url, "GET", "");
+
+        try
+        {
+            var response = await _httpClient.SendAsync(request);
+            var responseString = await response.Content.ReadAsStringAsync();
+            var statusCode = response.StatusCode.ToString();
+
+            await _repository.UpdateApiLogResponseAsync(logId, statusCode, responseString);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                 _logger.LogError($"Failed to fetch job items. Status: {statusCode}, Content: {responseString}");
+                 throw new HttpRequestException($"Failed to fetch job items: {statusCode}");
+            }
+
+            FlexJobItemsResponseDto? items = null;
+            
+            try 
+            {
+                items = JsonConvert.DeserializeObject<FlexJobItemsResponseDto>(responseString);
+            }
+            catch (JsonException ex)
+            {
+                 _logger.LogError(ex, "JSON parsing failed for job items.");
+            }
+
+            if (items != null)
+            {
+                await _repository.SaveJobItemsAsync(items);
+
+                int roleCount = items.jobRoles?.Count ?? 0;
+                int rankCount = items.jobRanks?.Count ?? 0;
+                int titleCount = items.jobTitles?.Count ?? 0;
+
+                _logger.LogInformation($"Saved Job Items: {roleCount} roles, {rankCount} ranks, {titleCount} titles.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching/saving job items.");
             throw;
         }
     }

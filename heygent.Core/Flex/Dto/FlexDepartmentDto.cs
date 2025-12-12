@@ -11,4 +11,3 @@ public class FlexDepartmentDto
     public DateTime? endDate { get; set; }
     public string? sortOrder { get; set; }
 }
-
