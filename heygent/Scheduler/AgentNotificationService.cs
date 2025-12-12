@@ -72,6 +72,9 @@ public class AgentNotificationService : BackgroundService
                 {
                     _logger.LogError(ex, "An error occurred during the Agent Notification job.");
                 }
+
+                // 작업 완료 후, 다음 스케줄 계산 시 현재 시간과 겹치는 것을 방지하기 위해 1초 대기
+                await Task.Delay(1000, stoppingToken);
             }
             else
             {
