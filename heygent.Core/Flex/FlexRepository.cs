@@ -51,177 +51,23 @@ public class FlexRepository
                 response_body TEXT,
                 response_at TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_department (
+                id SERIAL PRIMARY KEY,
+                department_code VARCHAR(30) NOT NULL,
+                name VARCHAR(300) NOT NULL,
+                parent_department_code VARCHAR(30),
+                display_order INT NOT NULL,
+                visible BOOLEAN NOT NULL,
+                begin_date DATE,
+                end_date DATE,
+                sort_order TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         ";
 
         await conn.ExecuteAsync(sql);
         _logger.LogInformation("Flex tables ensured.");
-    }
-
-    public async Task SaveOrganizationsAsync(List<FlexOrganizationDto> items)
-    {
-        if (items == null || !items.Any()) return;
-
-        using var conn = CreateConnection();
-        conn.Open();
-        using var trans = conn.BeginTransaction();
-
-        try
-        {
-            foreach (var item in items)
-            {
-                // 1. Check existence
-                var exists = await conn.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(1) FROM hr.flex_organization WHERE code = @code", 
-                    new { code = item.code }, trans) > 0;
-
-                if (exists)
-                {
-                    // 2. Update
-                    await conn.ExecuteAsync(
-                        @"UPDATE hr.flex_organization 
-                          SET name = @name, parent_code = @parentCode, updated_at = CURRENT_TIMESTAMP
-                          WHERE code = @code", 
-                        item, trans);
-                }
-                else
-                {
-                    // 3. Insert
-                    await conn.ExecuteAsync(
-                        @"INSERT INTO hr.flex_organization (code, name, parent_code, updated_at)
-                          VALUES (@code, @name, @parentCode, CURRENT_TIMESTAMP)", 
-                        item, trans);
-                }
-            }
-            trans.Commit();
-        }
-        catch
-        {
-            trans.Rollback();
-            throw;
-        }
-    }
-
-    public async Task SaveEmployeesAsync(List<FlexEmployeeDto> items)
-    {
-        if (items == null || !items.Any()) return;
-
-        using var conn = CreateConnection();
-        conn.Open();
-        using var trans = conn.BeginTransaction();
-
-        try
-        {
-            foreach (var item in items)
-            {
-                var exists = await conn.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(1) FROM hr.flex_employee WHERE user_id = @userId", 
-                    new { userId = item.userId }, trans) > 0;
-
-                if (exists)
-                {
-                    await conn.ExecuteAsync(
-                        @"UPDATE hr.flex_employee 
-                          SET name = @name, email = @email, employee_number = @employeeNumber, organization_code = @organizationCode, updated_at = CURRENT_TIMESTAMP
-                          WHERE user_id = @userId", 
-                        item, trans);
-                }
-                else
-                {
-                    await conn.ExecuteAsync(
-                        @"INSERT INTO hr.flex_employee (user_id, name, email, employee_number, organization_code, updated_at)
-                          VALUES (@userId, @name, @email, @employeeNumber, @organizationCode, CURRENT_TIMESTAMP)", 
-                        item, trans);
-                }
-            }
-            trans.Commit();
-        }
-        catch
-        {
-            trans.Rollback();
-            throw;
-        }
-    }
-
-    public async Task SaveLeavesAsync(List<FlexLeaveDto> items)
-    {
-        if (items == null || !items.Any()) return;
-
-        using var conn = CreateConnection();
-        conn.Open();
-        using var trans = conn.BeginTransaction();
-
-        try
-        {
-            foreach (var item in items)
-            {
-                var exists = await conn.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(1) FROM hr.flex_leave WHERE leave_id = @leaveId", 
-                    new { leaveId = item.leaveId }, trans) > 0;
-
-                if (exists)
-                {
-                    await conn.ExecuteAsync(
-                        @"UPDATE hr.flex_leave 
-                          SET user_id = @userId, type = @type, start_date = @startDate, end_date = @endDate, status = @status, updated_at = CURRENT_TIMESTAMP
-                          WHERE leave_id = @leaveId", 
-                        item, trans);
-                }
-                else
-                {
-                    await conn.ExecuteAsync(
-                        @"INSERT INTO hr.flex_leave (leave_id, user_id, type, start_date, end_date, status, updated_at)
-                          VALUES (@leaveId, @userId, @type, @startDate, @endDate, @status, CURRENT_TIMESTAMP)", 
-                        item, trans);
-                }
-            }
-            trans.Commit();
-        }
-        catch
-        {
-            trans.Rollback();
-            throw;
-        }
-    }
-
-    public async Task SaveWorkSchedulesAsync(List<FlexWorkScheduleDto> items)
-    {
-        if (items == null || !items.Any()) return;
-
-        using var conn = CreateConnection();
-        conn.Open();
-        using var trans = conn.BeginTransaction();
-
-        try
-        {
-            foreach (var item in items)
-            {
-                var exists = await conn.ExecuteScalarAsync<int>(
-                    "SELECT COUNT(1) FROM hr.flex_work_schedule WHERE schedule_id = @scheduleId", 
-                    new { scheduleId = item.scheduleId }, trans) > 0;
-
-                if (exists)
-                {
-                    await conn.ExecuteAsync(
-                        @"UPDATE hr.flex_work_schedule 
-                          SET user_id = @userId, work_date = @date, start_time = @startTime, end_time = @endTime, updated_at = CURRENT_TIMESTAMP
-                          WHERE schedule_id = @scheduleId", 
-                        item, trans);
-                }
-                else
-                {
-                    await conn.ExecuteAsync(
-                        @"INSERT INTO hr.flex_work_schedule (schedule_id, user_id, work_date, start_time, end_time, updated_at)
-                          VALUES (@scheduleId, @userId, @date, @startTime, @endTime, CURRENT_TIMESTAMP)", 
-                        item, trans);
-                }
-            }
-            trans.Commit();
-        }
-        catch
-        {
-            trans.Rollback();
-            throw;
-        }
     }
 
     public async Task<int> InsertApiLogRequestAsync(string url, string method, string requestBody)
@@ -265,6 +111,86 @@ public class FlexRepository
             cmd.Parameters.AddWithValue("responseBody", responseBody ?? (object)DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
+    }
+
+    public async Task SaveDepartmentsAsync(List<FlexDepartmentDto> items)
+    {
+        if (items == null || !items.Any()) return;
+
+        using var conn = CreateConnection();
+        conn.Open();
+
+        // AOT Compatibility: Use NpgsqlCommand directly instead of Dapper
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var trans = npgsqlConn.BeginTransaction();
+
+            try
+            {
+                foreach (var item in items)
+                {
+                    // 1. Check existence
+                    bool exists;
+                    using (var checkCmd = new NpgsqlCommand("SELECT COUNT(1) FROM hr.flex_department WHERE department_code = @departmentCode", npgsqlConn, trans))
+                    {
+                        checkCmd.Parameters.AddWithValue("departmentCode", item.departmentCode);
+                        var count = await checkCmd.ExecuteScalarAsync();
+                        exists = Convert.ToInt32(count) > 0;
+                    }
+
+                    if (exists)
+                    {
+                        // 2. Update
+                        using var updateCmd = new NpgsqlCommand(
+                            @"UPDATE hr.flex_department 
+                              SET name = @name, parent_department_code = @parentDepartmentCode, 
+                                  display_order = @displayOrder, visible = @visible, 
+                                  begin_date = @beginDate, end_date = @endDate, sort_order = @sortOrder, 
+                                  updated_at = CURRENT_TIMESTAMP
+                              WHERE department_code = @departmentCode", npgsqlConn, trans);
+                        
+                        updateCmd.Parameters.AddWithValue("departmentCode", item.departmentCode);
+                        updateCmd.Parameters.AddWithValue("name", item.name);
+                        updateCmd.Parameters.AddWithValue("parentDepartmentCode", item.parentDepartmentCode ?? (object)DBNull.Value);
+                        updateCmd.Parameters.AddWithValue("displayOrder", item.displayOrder);
+                        updateCmd.Parameters.AddWithValue("visible", item.visible);
+                        updateCmd.Parameters.AddWithValue("beginDate", item.beginDate.HasValue ? (object)item.beginDate.Value : DBNull.Value);
+                        updateCmd.Parameters.AddWithValue("endDate", item.endDate.HasValue ? (object)item.endDate.Value : DBNull.Value);
+                        updateCmd.Parameters.AddWithValue("sortOrder", item.sortOrder ?? (object)DBNull.Value);
+
+                        await updateCmd.ExecuteNonQueryAsync();
+                    }
+                    else
+                    {
+                        // 3. Insert
+                        using var insertCmd = new NpgsqlCommand(
+                            @"INSERT INTO hr.flex_department (department_code, name, parent_department_code, display_order, visible, begin_date, end_date, sort_order, updated_at)
+                              VALUES (@departmentCode, @name, @parentDepartmentCode, @displayOrder, @visible, @beginDate, @endDate, @sortOrder, CURRENT_TIMESTAMP)", npgsqlConn, trans);
+                              
+                        insertCmd.Parameters.AddWithValue("departmentCode", item.departmentCode);
+                        insertCmd.Parameters.AddWithValue("name", item.name);
+                        insertCmd.Parameters.AddWithValue("parentDepartmentCode", item.parentDepartmentCode ?? (object)DBNull.Value);
+                        insertCmd.Parameters.AddWithValue("displayOrder", item.displayOrder);
+                        insertCmd.Parameters.AddWithValue("visible", item.visible);
+                        insertCmd.Parameters.AddWithValue("beginDate", item.beginDate.HasValue ? (object)item.beginDate.Value : DBNull.Value);
+                        insertCmd.Parameters.AddWithValue("endDate", item.endDate.HasValue ? (object)item.endDate.Value : DBNull.Value);
+                        insertCmd.Parameters.AddWithValue("sortOrder", item.sortOrder ?? (object)DBNull.Value);
+
+                        await insertCmd.ExecuteNonQueryAsync();
+                    }
+                }
+                trans.Commit();
+            }
+            catch
+            {
+                trans.Rollback();
+                throw;
+            }
         }
         else
         {

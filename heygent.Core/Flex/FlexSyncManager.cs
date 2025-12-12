@@ -30,6 +30,7 @@ public class FlexSyncManager
 
             // 조직 (departments)
             // 조직 목록 조회 (Get all departments) - https://developers.flex.team/reference/departments-get-all-departments
+            await _client.FetchAndSaveDepartmentsAsync();
 
             // 조직 조직장 (department-heads)
             // 조직 조직장 조회 (Get all department heads) - https://developers.flex.team/reference/getdepartmentsheads

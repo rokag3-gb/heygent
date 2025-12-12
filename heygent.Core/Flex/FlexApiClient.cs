@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
-using System.Text;
 using Newtonsoft.Json;
-using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using heygent.Core.Flex.Dto;
 using heygent.Core.Credential;
 using heygent.Core.Model;
@@ -40,7 +39,7 @@ public class FlexApiClient
 
     public async Task AuthenticateAsync()
     {
-        var url = $"{Conf.Current.flex.base_url}auth/realms/open-api/protocol/openid-connect/token";
+        var url = $"{Conf.Current.flex.base_url}/auth/realms/open-api/protocol/openid-connect/token";
 
         // 요청 준비
         var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -101,43 +100,72 @@ public class FlexApiClient
         }
     }
 
-    private async Task<T> GetAsync<T>(string uri)
+    public async Task FetchAndSaveDepartmentsAsync()
     {
         await EnsureAccessTokenAsync();
 
-        var response = await _httpClient.GetAsync(uri);
+        var url = $"{Conf.Current.flex.base_url}/departments/all";
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
         
-        // 401 Unauthorized 발생 시 토큰 갱신 후 1회 재시도
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        var logId = await _repository.InsertApiLogRequestAsync(url, "GET", "");
+
+        try
         {
-            _logger.LogWarning("Unauthorized access. Retrying after authentication...");
-            await AuthenticateAsync();
-            response = await _httpClient.GetAsync(uri);
+            var response = await _httpClient.SendAsync(request);
+            var responseString = await response.Content.ReadAsStringAsync();
+            var statusCode = response.StatusCode.ToString();
+
+            await _repository.UpdateApiLogResponseAsync(logId, statusCode, responseString);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                 _logger.LogError($"Failed to fetch departments. Status: {statusCode}, Content: {responseString}");
+                 throw new HttpRequestException($"Failed to fetch departments: {statusCode}");
+            }
+
+            List<FlexDepartmentDto>? items = null;
+            
+            try 
+            {
+                var token = JToken.Parse(responseString);
+
+                if (token is JArray)
+                {
+                    items = token.ToObject<List<FlexDepartmentDto>>();
+                }
+                else if (token is JObject jObj)
+                {
+                    if (jObj["departments"] != null)
+                    {
+                        items = jObj["departments"]?.ToObject<List<FlexDepartmentDto>>();
+                    }
+                    else if (jObj["content"] != null)
+                    {
+                        items = jObj["content"]?.ToObject<List<FlexDepartmentDto>>();
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Unknown response structure for departments.");
+                    }
+                }
+            }
+            catch (JsonException ex)
+            {
+                 _logger.LogError(ex, "JSON parsing failed.");
+                 // 파싱 실패시 예외를 다시 던지거나, items를 null로 유지하여 저장 로직 스킵
+            }
+
+            if (items != null && items.Any())
+            {
+                await _repository.SaveDepartmentsAsync(items);
+
+                _logger.LogInformation($"Saved {items.Count} departments.");
+            }
         }
-
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<T>(content) ?? throw new Exception("Failed to deserialize response.");
-    }
-
-    public async Task<List<FlexOrganizationDto>> GetOrganizationsAsync()
-    {
-        // URL 예시
-        return await GetAsync<List<FlexOrganizationDto>>("v2/organizations");
-    }
-
-    public async Task<List<FlexEmployeeDto>> GetEmployeesAsync()
-    {
-        return await GetAsync<List<FlexEmployeeDto>>("v2/users"); 
-    }
-
-    public async Task<List<FlexLeaveDto>> GetLeavesAsync()
-    {
-        return await GetAsync<List<FlexLeaveDto>>("v2/time-off/applications");
-    }
-
-    public async Task<List<FlexWorkScheduleDto>> GetWorkSchedulesAsync()
-    {
-        return await GetAsync<List<FlexWorkScheduleDto>>("v2/work-schedules");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching/saving departments.");
+            throw;
+        }
     }
 }

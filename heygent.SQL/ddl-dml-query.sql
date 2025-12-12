@@ -1,10 +1,9 @@
 
 select * from hr.flex_api_log order by id desc limit 5;
 
-
-
-
-
+--DROP TABLE hr.flex_department;
+select * from hr.flex_department where name like '엔지니어링%'
+         where visible = true;
 
 
 
