@@ -38,8 +38,7 @@ public class FlexRepository
         using var conn = CreateConnection();
         conn.Open();
 
-        // 아주 심플한 DDL (ANSI SQL 데이터 타입 사용 지향)
-        // PostgreSQL: VARCHAR, TEXT, TIMESTAMP 등
+        // simple DDL based on ANSI SQL
         var sql = @"
             CREATE TABLE IF NOT EXISTS hr.flex_api_log (
                 id SERIAL PRIMARY KEY,
@@ -225,7 +224,7 @@ public class FlexRepository
         }
     }
 
-    public async Task<int> InsertApiLogRequestAsync(string url, string method, string requestHeader, string requestBody)
+    public async Task<int> InsertApiLogRequestAsync(string url, string method, string requestBody)
     {
         using var conn = CreateConnection();
         conn.Open();
@@ -233,12 +232,11 @@ public class FlexRepository
         // AOT Compatibility: Use NpgsqlCommand directly instead of Dapper
         if (conn is NpgsqlConnection npgsqlConn)
         {
-            using var cmd = new NpgsqlCommand(@"INSERT INTO hr.flex_api_log (url, method, request_header, request_body)
-                                              VALUES (@url, @method, @requestHeader, @requestBody)
+            using var cmd = new NpgsqlCommand(@"INSERT INTO hr.flex_api_log (url, method, request_body)
+                                              VALUES (@url, @method, @requestBody)
                                               RETURNING id", npgsqlConn);
             cmd.Parameters.AddWithValue("url", url ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("method", method ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("requestHeader", requestHeader ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("requestBody", requestBody ?? (object)DBNull.Value);
 
             var result = await cmd.ExecuteScalarAsync();

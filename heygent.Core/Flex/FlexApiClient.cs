@@ -57,7 +57,7 @@ public class FlexApiClient
         var requestBodyStr = await content.ReadAsStringAsync();
         
         // 요청 log insert
-        var logId = await _repository.InsertApiLogRequestAsync(url, "POST", request.Headers.ToString(), requestBodyStr);
+        var logId = await _repository.InsertApiLogRequestAsync(url, "POST", requestBodyStr);
 
         try
         {
