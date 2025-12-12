@@ -129,6 +129,9 @@ class Program
                     services.AddTransient<Core.Flex.FlexRepository>();
                     services.AddTransient<Core.Flex.FlexSyncManager>();
 
+                    // Gemini API Client 등록
+                    services.AddHttpClient<Core.Gemini.GeminiApiClient>();
+
                     // NamedPipe 서버 등록
                     services.AddSingleton<INamedPipeServer, NamedPipeServer>();
                 })
@@ -152,6 +155,55 @@ class Program
             // NamedPipe 서버 시작
             var namedPipeServer = host.Services.GetRequiredService<INamedPipeServer>();
             namedPipeServer.Start();
+
+            ////////////////////////////////////////////////////
+            // Gemini API Test
+            try
+            {
+                var geminiClient = host.Services.GetRequiredService<Core.Gemini.GeminiApiClient>();
+
+                // API Key가 설정되어 있는지 확인
+                if (!string.IsNullOrWhiteSpace(Core.Credential.GeminiSecret.ApiKey))
+                {
+                    logger.LogInformation("Gemini API 테스트 호출을 시도합니다...");
+
+                    // Get models
+                    // try
+                    // {
+                    //     var models = await geminiClient.ListModelsAsync();
+                    //     logger.LogInformation($"[Gemini Model List] 총 {models.Count}개의 모델을 찾았습니다.");
+                    //     foreach (var model in models)
+                    //     {
+                    //         // generateContent 메소드를 지원하는 모델만 출력
+                    //         if (model.SupportedGenerationMethods != null && model.SupportedGenerationMethods.Contains("generateContent"))
+                    //         {
+                    //             logger.LogInformation($" - Model: {model.Name} ({model.DisplayName})");
+                    //         }
+                    //     }
+                    // }
+                    // catch (Exception ex)
+                    // {
+                    //     logger.LogWarning($"모델 목록 조회 실패: {ex.Message}");
+                    // }
+                    
+                    // Gemini API request & response test
+                    var prompt = "현재 시점의 FED 기준금리, 한국 기준금리를 알려주고, 앞으로 1년 동안의 전망을 간단히 설명해줘.";
+                    // prompt = "최신의 Gemini 모델을 호출하는 간단한 샘플 소스코드를 Rust로 짜줘.";
+
+                    var response = await geminiClient.GenerateContentAsync(prompt);
+
+                    logger.LogInformation($"Gemini API 응답:\n{response}");
+                }
+                else
+                {
+                    logger.LogWarning("Gemini API Key가 설정되지 않았습니다. 'heygent.Core/Credential/Secret.cs' 파일에서 API Key를 설정하면 테스트가 실행됩니다.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Gemini API 테스트 호출 중 오류가 발생했습니다.");
+            }
+            ////////////////////////////////////////////////////
 
             await host.RunAsync();
         }
