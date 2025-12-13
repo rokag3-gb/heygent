@@ -338,9 +338,9 @@ class Program
                     //     "#36a64f" // Green Color
                     // );
 
-                    // 5) 장기 미사용 연차 알림 발송 예제
-                    var leaveAlert = Core.Notification.SlackCardTemplates.GetLongTermNoLeaveAlert("우즈", 75, 79, 85, 50);
-                    await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "장기 미사용 연차 알림", leaveAlert);
+                    // 기능 5) 장기 미사용 연차 알림 발송 예제
+                    // var leaveAlert = Core.Notification.SlackCardTemplates.GetLongTermNoLeaveAlert("우즈", 75, 79, 85, 50);
+                    // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "장기 미사용 연차 알림", leaveAlert);
 
                     // 기능 6) 일일 근무 현황 발송 예제
                     // var dailyReport = Core.Notification.SlackCardTemplates.GetDailyWorkStatus(
@@ -354,17 +354,17 @@ class Program
                     // );
                     // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "일일 근무 현황", dailyReport);
 
-                    // 5. [기능 9] 팀원용 주간 근무 현황 발송 예제
-                    // var memberReport = Core.Notification.SlackCardTemplates.GetWeeklyWorkStatusForMember("김정우", 42.5, 9.5);
-                    // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "주간 근무 현황", memberReport);
+                    // 기능 8) 팀원용 주간 근무 현황 발송 예제
+                    var memberReport = Core.Notification.SlackCardTemplates.GetWeeklyWorkStatusForMember("김정우", 42.5, 9.5);
+                    await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "주간 근무 현황", memberReport);
 
-                    // 6. [기능 9] 매니저용 팀 주간 근무 현황 발송 예제
-                    // var teamStats = new List<(string, double)>
-                    // {
-                    //     ("김정우", 42.5), ("이영희", 48.0), ("박민수", 50.2), ("최지원", 35.0)
-                    // };
-                    // var managerReport = Core.Notification.SlackCardTemplates.GetWeeklyWorkStatusForManager("테크본부", teamStats);
-                    // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "팀 주간 근무 현황", managerReport);
+                    // 기능 8) 매니저용 팀 주간 근무 현황 발송 예제
+                    var teamStats = new List<(string, double)>
+                    {
+                        ("김정우", 42.5), ("이영희", 48.0), ("박민수", 50.2), ("최지원", 35.0)
+                    };
+                    var managerReport = Core.Notification.SlackCardTemplates.GetWeeklyWorkStatusForManager("테크본부", teamStats);
+                    await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "팀 주간 근무 현황", managerReport);
 
                     logger.LogInformation("[SlackBot] 테스트 코드 실행 완료 (실제 발송하려면 주석 해제 필요)");
                 }
