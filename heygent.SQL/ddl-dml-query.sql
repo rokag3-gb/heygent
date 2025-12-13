@@ -12,8 +12,19 @@ select * from hr.flex_jobRoleCode;
 select * from hr.flex_jobRankCode;
 select * from hr.flex_jobTitleCode;
 
+--drop table hr.flex_employee;
 --delete from hr.flex_employee;
 select * from hr.flex_employee where employee_number = '225646' order by employee_number;
+
+select * from hr.flex_employee
+where company_leave_date is null
+--and name = '주규남'
+and (primary_department_name = '파생트레이딩플랫폼팀'
+     or primary_department_name like '코어%'
+    or primary_department_name like '프로덕트엔지니어링팀%'
+    or primary_department_name like '테크본부%'
+    )
+order by company_group_join_date;
 
 /*
 create table hr.tbl_test1

@@ -45,6 +45,8 @@ public class FlexSyncManager
             await _client.FetchAndSaveEmployeeNumbersAsync();
 
             // 구성원 마스터 (user-masters)
+            // 구성원 마스터 조회 (Get user masters) - https://developers.flex.team/reference/user-masters
+            await _client.FetchAndSaveUserMastersAsync();
             // 사번으로 구성원 마스터 목록 조회 (Get user masters by employee numbers) - https://developers.flex.team/reference/user-masters-get-user-masters-by-employee-numbers
             await _client.FetchAndSaveEmployeeNumbersAsync();
             

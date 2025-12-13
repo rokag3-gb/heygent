@@ -353,4 +353,76 @@ public class FlexApiClient
         
         _logger.LogInformation($"Completed fetching and saving all employee numbers. Total: {totalSaved}");
     }
+
+    public async Task FetchAndSaveUserMastersAsync()
+    {
+        await EnsureAccessTokenAsync();
+
+        // 1. Get all employee numbers from DB
+        var employeeNumbers = await _repository.GetAllEmployeeNumbersAsync();
+        if (!employeeNumbers.Any())
+        {
+            _logger.LogInformation("No employee numbers found to fetch user masters.");
+            return;
+        }
+
+        // 2. Process in batches of 20
+        const int batchSize = 20;
+        int totalSaved = 0;
+
+        for (int i = 0; i < employeeNumbers.Count; i += batchSize)
+        {
+            var batch = employeeNumbers.Skip(i).Take(batchSize);
+            // Assuming the query parameter name is 'employeeNumbers' or 'userIds'. 
+            // The prompt says "뒤에 붙여서 호출", similar to departmentCodes.
+            // Based on flex user-masters typical pattern, let's assume 'employeeNumbers' or check if user provided param name.
+            // User said "전체 사원번호를... ? 뒤에 붙여서 호출".
+            // If we follow 'FetchAndSaveDepartmentHeadsAsync' pattern which used `departmentCodes={csv}`,
+            // we will use `employeeNumbers={csv}` or `userIds={csv}`. 
+            // Checking the previous prompt context: "GET /user-masters" sample doesn't show request param name explicitly.
+            // However, typical Flex API pattern for bulk fetch by ID is often pluralized parameter.
+            // Let's assume `employeeNumbers` as the key, consistent with the object property name.
+            
+            // Wait, looking at standard Flex API for user-masters, it might be filtering by employeeNumbers.
+            // Let's try `employeeNumbers`.
+            
+            var employeeNumbersCsv = string.Join(",", batch);
+            var baseUrl = $"{Conf.Current.flex.base_url}/user-masters";
+            var requestUrl = $"{baseUrl}?employeeNumbers={employeeNumbersCsv}";
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+            
+            var logId = await _repository.InsertApiLogRequestAsync(baseUrl, "GET", $"employeeNumbers={employeeNumbersCsv}");
+
+            try
+            {
+                var response = await _httpClient.SendAsync(request);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var statusCode = response.StatusCode.ToString();
+
+                await _repository.UpdateApiLogResponseAsync(logId, statusCode, responseString);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"Failed to fetch user masters. Status: {statusCode}, Content: {responseString}");
+                    throw new HttpRequestException($"Failed to fetch user masters: {statusCode}");
+                }
+
+                var dto = JsonConvert.DeserializeObject<FlexUserMasterResponseDto>(responseString);
+                
+                if (dto != null && dto.users != null && dto.users.Any())
+                {
+                    await _repository.SaveUserMastersAsync(dto.users);
+                    totalSaved += dto.users.Count;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching/saving user masters.");
+                throw;
+            }
+        }
+        
+        _logger.LogInformation($"Saved user masters for total {totalSaved} users (processed in batches).");
+    }
 }
