@@ -90,6 +90,15 @@ public class FlexRepository
                 name VARCHAR(200),
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS hr.flex_employee (
+                employee_number VARCHAR(100) PRIMARY KEY,
+                user_id VARCHAR(100),
+                name VARCHAR(200),
+                email VARCHAR(200),
+                organization_code VARCHAR(100),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         ";
 
         await conn.ExecuteAsync(sql);
@@ -379,6 +388,42 @@ public class FlexRepository
                     }
                 }
 
+                trans.Commit();
+            }
+            catch
+            {
+                trans.Rollback();
+                throw;
+            }
+        }
+        else
+        {
+            throw new NotSupportedException("Only Npgsql is supported for AOT compatibility in this method.");
+        }
+    }
+
+    public async Task SaveEmployeeNumbersAsync(List<string> employeeNumbers)
+    {
+        if (employeeNumbers == null || !employeeNumbers.Any()) return;
+
+        using var conn = CreateConnection();
+        conn.Open();
+
+        if (conn is NpgsqlConnection npgsqlConn)
+        {
+            using var trans = npgsqlConn.BeginTransaction();
+            try
+            {
+                foreach (var empNo in employeeNumbers)
+                {
+                    using var cmd = new NpgsqlCommand(
+                        @"INSERT INTO hr.flex_employee (employee_number, updated_at)
+                          VALUES (@empNo, CURRENT_TIMESTAMP)
+                          ON CONFLICT (employee_number) 
+                          DO UPDATE SET updated_at = CURRENT_TIMESTAMP", npgsqlConn, trans);
+                    cmd.Parameters.AddWithValue("empNo", empNo);
+                    await cmd.ExecuteNonQueryAsync();
+                }
                 trans.Commit();
             }
             catch

@@ -293,4 +293,64 @@ public class FlexApiClient
             throw;
         }
     }
+
+    public async Task FetchAndSaveEmployeeNumbersAsync()
+    {
+        await EnsureAccessTokenAsync();
+
+        string? nextPageKey = null;
+        int totalSaved = 0;
+
+        _logger.LogInformation("Starting to fetch employee numbers...");
+        
+        while (true)
+        {
+            var baseUrl = $"{Conf.Current.flex.base_url}/users/employee-numbers?pageSize=20";
+            var url = string.IsNullOrEmpty(nextPageKey) ? baseUrl : $"{baseUrl}&nextPageKey={Uri.EscapeDataString(nextPageKey)}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var logId = await _repository.InsertApiLogRequestAsync(url, "GET", "");
+
+            try 
+            {
+                var response = await _httpClient.SendAsync(request);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var statusCode = response.StatusCode.ToString();
+                
+                await _repository.UpdateApiLogResponseAsync(logId, statusCode, responseString);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"Failed to fetch employee numbers. Status: {statusCode}, Content: {responseString}");
+                    throw new HttpRequestException($"Failed to fetch employee numbers: {statusCode}");
+                }
+                
+                var dto = JsonConvert.DeserializeObject<FlexEmployeeNumbersResponseDto>(responseString);
+                
+                if (dto != null && dto.employeeNumbers != null && dto.employeeNumbers.Any())
+                {
+                    await _repository.SaveEmployeeNumbersAsync(dto.employeeNumbers);
+                    totalSaved += dto.employeeNumbers.Count;
+                    _logger.LogInformation($"Saved {dto.employeeNumbers.Count} employee numbers. Total so far: {totalSaved}");
+                }
+                
+                // hasNext 가 true 이고 nextPageKey 가 있을 때에만 다음 페이지 진행
+                if (dto != null && dto.hasNext && !string.IsNullOrWhiteSpace(dto.nextPageKey))
+                {
+                    nextPageKey = dto.nextPageKey;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                 _logger.LogError(ex, "Error fetching/saving employee numbers.");
+                 throw;
+            }
+        }
+        
+        _logger.LogInformation($"Completed fetching and saving all employee numbers. Total: {totalSaved}");
+    }
 }

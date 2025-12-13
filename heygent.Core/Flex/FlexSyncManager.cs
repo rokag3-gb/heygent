@@ -42,10 +42,12 @@ public class FlexSyncManager
 
             // 구성원 (users)
             // 사번 목록 조회 (Get user employee numbers) - https://developers.flex.team/reference/users-get-employee-numbers
+            await _client.FetchAndSaveEmployeeNumbersAsync();
 
             // 구성원 마스터 (user-masters)
             // 사번으로 구성원 마스터 목록 조회 (Get user masters by employee numbers) - https://developers.flex.team/reference/user-masters-get-user-masters-by-employee-numbers
-
+            await _client.FetchAndSaveEmployeeNumbersAsync();
+            
             // 구성원 조직 (user-departments)
             // 사번으로 구성원 조직·직책 목록 조회 (Get user department and job title by employee numbers) - https://developers.flex.team/reference/user-departments-get-user-departments-by-employee-numbers
 

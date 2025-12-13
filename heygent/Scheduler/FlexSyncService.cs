@@ -110,6 +110,9 @@ public class FlexSyncService : BackgroundService
                     // 작업이 성공하든 실패하든 반드시 세마포어를 해제.
                     _semaphore.Release();
                 }
+
+                // 작업 완료 후, 다음 스케줄 계산 시 현재 시간과 겹치는 것을 방지하기 위해 인위적으로 1초 대기
+                await Task.Delay(1000, stoppingToken);
             }
             else
             {
