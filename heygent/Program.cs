@@ -220,19 +220,157 @@ class Program
                 try
                 {
                     logger.LogInformation("[LarkBot] 테스트 메시지 발송 시도...");
+                    
+                    // 간단한 text message 발송
                     // await larkBot.SendTextMessageAsync("jwoo.kim@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
-                    // await larkBot.SendTextMessageAsync("heejo@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
-                    // await larkBot.SendTextMessageAsync("nohkuon.park@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
-                    // await larkBot.SendTextMessageAsync("henry@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
-                    await larkBot.SendInteractiveCardAsync("jwoo.kim@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
-                    // await larkBot.SendInteractiveCardAsync("heejo@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
-                    // await larkBot.SendInteractiveCardAsync("nohkuon.park@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
-                    // await larkBot.SendInteractiveCardAsync("henry@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
+
+                    // InteractiveCard 발송
+                    // await larkBot.SendInteractiveCardAsync("jwoo.kim@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
+                    
+                    // Custom JSON Card 발송
+                    var cardJson =
+                    @"{
+                      ""config"": { ""wide_screen_mode"": true },
+                      ""header"": { ""title"": { ""tag"": ""plain_text"", ""content"": ""🏖️ 연차 사용 독려 알림"" }, ""template"": ""orange"" },
+                      ""elements"": [
+                        {
+                          ""tag"": ""div"",
+                          ""text"": {
+                            ""tag"": ""lark_md"",
+                            ""content"": ""안녕하세요! 올해도 벌써 **12월**이네요. ☃️\n남은 연차를 확인하고, **재충전의 시간**을 가져보세요! 🎄""
+                          }
+                        },
+                        {
+                          ""tag"": ""hr""
+                        },
+                        {
+                          ""tag"": ""div"",
+                          ""fields"": [
+                            {
+                              ""is_short"": true,
+                              ""text"": {
+                                ""tag"": ""lark_md"",
+                                ""content"": ""**잔여 연차:**\n15.5일""
+                              }
+                            },
+                            {
+                              ""is_short"": true,
+                              ""text"": {
+                                ""tag"": ""lark_md"",
+                                ""content"": ""**사용 기한:**\n2025-12-31""
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          ""tag"": ""action"",
+                          ""actions"": [
+                            {
+                              ""tag"": ""button"",
+                              ""text"": {
+                                ""tag"": ""plain_text"",
+                                ""content"": ""휴가 신청하러 가기 ✈️""
+                              },
+                              ""type"": ""primary"",
+                              ""url"": ""https://flex.team/time-tracking/my-time-off/dashboard""
+                            }
+                          ]
+                        }
+                      ]
+                    }";
+                    
+                    // 기능 1) 출퇴근 누락 안내
+                    // cardJson = Core.Notification.LarkCardTemplates.GetAttendanceReminder("우즈", true, "07:58");
+                    // await larkBot.SendInteractiveCardRawAsync("jwoo.kim@nextsecurities.com", cardJson);
+
+                    // cardJson = Core.Notification.LarkCardTemplates.GetAttendanceReminder("우즈", false, "18:21");
+                    // await larkBot.SendInteractiveCardRawAsync("jwoo.kim@nextsecurities.com", cardJson);
+
+                    // 기능 4-1) 입사기념일
+                    // cardJson = Core.Notification.LarkCardTemplates.GetWorkAnniversary("우즈", Convert.ToDateTime("2024-12-16"), 1, "테크본부", "Server Developer", false);
+                    // await larkBot.SendInteractiveCardRawAsync("jwoo.kim@nextsecurities.com", cardJson);
+
+                    // cardJson = Core.Notification.LarkCardTemplates.GetWorkAnniversary("우즈", Convert.ToDateTime("2024-12-16"), 1, "테크본부", "Server Developer", true);
+                    // await larkBot.SendInteractiveCardRawAsync("jwoo.kim@nextsecurities.com", cardJson);
+                    // await larkBot.SendInteractiveCardRawAsync("jwoo.kim@nextsecurities.com", cardJson);
+
+                    // 기능 4-2) 생일자
+                    // cardJson = Core.Notification.LarkCardTemplates.GetBirthdayMessage("우즈", Convert.ToDateTime("1994-12-13"));
+                    // await larkBot.SendInteractiveCardRawAsync("jwoo.kim@nextsecurities.com", cardJson);
+
                     logger.LogInformation("[LarkBot] 테스트 메시지 발송 성공");
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "[LarkBot] 메시지 발송 실패");
+                }
+            }
+            #endregion
+            ////////////////////////////////////////////////////
+
+            #region Slack Bot Notification Test
+            // SlackSecret.BotToken이 설정되어 있다면 테스트 실행
+            if (!string.IsNullOrWhiteSpace(Core.Credential.SlackSecret.BotToken))
+            {
+                var loggerFactory = host.Services.GetRequiredService<ILoggerFactory>();
+                var slackLogger = loggerFactory.CreateLogger<Core.Notification.SlackBotClient>();
+                var slackClient = new Core.Notification.SlackBotClient(
+                    slackLogger,
+                    Core.Credential.SlackSecret.BotToken
+                    );
+
+                try
+                {
+                    logger.LogInformation("[SlackBot] 테스트 메시지 발송 시도...");
+
+                    // 채널에 메시지 발송
+                    // 채널 ID는 Slack에서 채널 이름을 우클릭 -> 링크 복사 -> 링크의 마지막 부분(C로 시작하는 문자열) 확인 가능
+                    // await slackClient.SendMessageAsync("C0A2K4C8H1P", "👋 안녕하세요! HEYgent가 채널에 인사를 드립니다.");
+
+                    // DM 발송 (이메일로 유저 찾아서 발송)
+                    // await slackClient.SendDirectMessageAsync("jwoo.kim@nextsecurities.com", "👋 안녕하세요! HEYgent Slack 봇이 DM을 보냅니다.");
+
+                    // 카드형 메시지 발송 (제목, 본문, 색상) - Lark의 Interactive Card와 유사
+                    // await slackClient.SendDirectCardMessageAsync(
+                    //     "jwoo.kim@nextsecurities.com", 
+                    //     "📢 HEYgent 알림", 
+                    //     "이것은 **Slack Block Kit**을 사용한 카드 메시지입니다.\nLark의 Interactive Card와 유사하게 *Markdown*과 색상을 지원합니다.", 
+                    //     "#36a64f" // Green Color
+                    // );
+
+                    // 5) 장기 미사용 연차 알림 발송 예제
+                    var leaveAlert = Core.Notification.SlackCardTemplates.GetLongTermNoLeaveAlert("우즈", 75, 79, 85, 50);
+                    await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "장기 미사용 연차 알림", leaveAlert);
+
+                    // 기능 6) 일일 근무 현황 발송 예제
+                    // var dailyReport = Core.Notification.SlackCardTemplates.GetDailyWorkStatus(
+                    //     Convert.ToDateTime("2025-12-16"),
+                    //     "테크본부",
+                    //     officeCount: 12,
+                    //     remoteCount: 5,
+                    //     leaveCount: 2,
+                    //     etcCount: 1,
+                    //     leaveNames: new List<string> { "홍길동", "김철수" }
+                    // );
+                    // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "일일 근무 현황", dailyReport);
+
+                    // 5. [기능 9] 팀원용 주간 근무 현황 발송 예제
+                    // var memberReport = Core.Notification.SlackCardTemplates.GetWeeklyWorkStatusForMember("김정우", 42.5, 9.5);
+                    // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "주간 근무 현황", memberReport);
+
+                    // 6. [기능 9] 매니저용 팀 주간 근무 현황 발송 예제
+                    // var teamStats = new List<(string, double)>
+                    // {
+                    //     ("김정우", 42.5), ("이영희", 48.0), ("박민수", 50.2), ("최지원", 35.0)
+                    // };
+                    // var managerReport = Core.Notification.SlackCardTemplates.GetWeeklyWorkStatusForManager("테크본부", teamStats);
+                    // await slackClient.SendCustomMessageAsync("C0A2K4C8H1P", "팀 주간 근무 현황", managerReport);
+
+                    logger.LogInformation("[SlackBot] 테스트 코드 실행 완료 (실제 발송하려면 주석 해제 필요)");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "[SlackBot] 메시지 발송 실패");
                 }
             }
             #endregion
