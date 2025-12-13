@@ -19,9 +19,15 @@ target:
     password: "your-password"
 
 notification:
-  type: lark_webhook
+  type: lark_bot
   lark_webhook:
     webhook_url: https://open.larksuite.com/open-apis/bot/v2/hook/{bot-uuid}
+    secret_token: {your-secret-token}
+  lark_bot:
+    app_id: cli_xxxxxxxxxx # Lark Developer Console -> Credentials -> App ID
+    app_secret: xxxxxxxxxx # Lark Developer Console -> Credentials -> App Secret
+  slack_bot:
+    webhook_url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     secret_token: {your-secret-token}
   enabled: n
 

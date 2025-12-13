@@ -7,9 +7,9 @@ public class AppConfig
     public ScheduleSection schedule { get; set; } = new();
     public FlexSection flex { get; set; } = new();
     public DatabaseSection database { get; set; } = new();
+    public NotificationSection notification { get; set; } = new();
     public SourceSection source { get; set; } = new();
     public TargetSection target { get; set; } = new();
-    public NotificationSection notification { get; set; } = new();
     public AwakerSection awaker { get; set; } = new();
 }
 
@@ -23,10 +23,8 @@ public class ScheduleSection
 
 public class FlexSection
 {
-    public string base_url { get; set; } = "https://flex.team/api/v2/";
+    public string base_url { get; set; } = "https://flex.team/api/v2";
     public string refresh_token { get; set; } = "ey213e98dhj1289d128eh187d872dh1236dgh3r10d91j2fkesdofi2398rth8172hd7b18c2358hrf87en82nf827n3nc329m23j95";
-    // public string access_key { get; set; } = "";
-    // public string secret_key { get; set; } = "";
 }
 
 public class DatabaseSection
@@ -50,7 +48,9 @@ public enum ConnectType
 
 public enum NotificationType
 {
-    Lark_Webhook, // Lark Webhook
+    Lark_Webhook, // Lark 특정 채팅방 내에 Webhook bot
+    Lark_Bot, // Org-wide 내에서 사용 가능한 Lark Bot (App ID / App Secret)
+    Slack_Bot,
     Email,
     Sms
 }
@@ -113,6 +113,9 @@ public class NotificationSection
     [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
     public LarkWebhookConfig? lark_webhook { get; set; }
 
+    [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+    public LarkBotConfig? lark_bot { get; set; }
+
     public bool enabled { get; set; } = true; // 알림 기능 사용 여부
 }
 
@@ -120,6 +123,12 @@ public class LarkWebhookConfig
 {
     public string webhook_url { get; set; } = "";
     public string secret_token { get; set; } = "";
+}
+
+public class LarkBotConfig
+{
+    public string app_id { get; set; } = "";
+    public string app_secret { get; set; } = "";
 }
 
 public class AwakerSection

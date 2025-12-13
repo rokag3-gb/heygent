@@ -12,6 +12,7 @@ namespace heygent.Core.Model;
 [YamlSerializable(typeof(AzureBlobSasConfig))]
 [YamlSerializable(typeof(NotificationSection))]
 [YamlSerializable(typeof(LarkWebhookConfig))]
+[YamlSerializable(typeof(LarkBotConfig))]
 [YamlSerializable(typeof(AwakerSection))]
 [YamlSerializable(typeof(ConnectType))]
 [YamlSerializable(typeof(NotificationType))]

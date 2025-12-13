@@ -157,7 +157,7 @@ class Program
             namedPipeServer.Start();
 
             ////////////////////////////////////////////////////
-            // Gemini API Test
+            #region Gemini API Test
             // try
             // {
             //     var geminiClient = host.Services.GetRequiredService<Core.Gemini.GeminiApiClient>();
@@ -203,6 +203,36 @@ class Program
             // {
             //     logger.LogError(ex, "Gemini API 테스트 호출 중 오류가 발생했습니다.");
             // }
+            #endregion
+            ////////////////////////////////////////////////////
+            #region Lark Bot Notification Test
+            if (Conf.Current.notification.lark_bot is not null)
+            {
+                var larkBot = new Core.Notification.LarkBotClient(
+                    Conf.Current.notification.lark_bot.app_id,
+                    Conf.Current.notification.lark_bot.app_secret
+                );
+                try
+                {
+                    logger.LogInformation("[LarkBot] 테스트 메시지 발송 시도...");
+                    // await larkBot.SendTextMessageAsync("jwoo.kim@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
+                    // await larkBot.SendTextMessageAsync("heejo@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
+                    // await larkBot.SendTextMessageAsync("nohkuon.park@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
+                    // await larkBot.SendTextMessageAsync("henry@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
+                    await larkBot.SendInteractiveCardAsync(
+                        "jwoo.kim@nextsecurities.com",
+                        "📢 연차 알림",
+                        "연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!",
+                        "orange"
+                    );
+                    logger.LogInformation("[LarkBot] 테스트 메시지 발송 성공");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "[LarkBot] 메시지 발송 실패");
+                }
+            }
+            #endregion
             ////////////////////////////////////////////////////
 
             await host.RunAsync();

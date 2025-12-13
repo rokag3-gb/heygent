@@ -65,6 +65,21 @@ public class YamlConfigHelper
                         */
                         provider = DatabaseProvider.PostgreSQL,
                     },
+                    notification = new NotificationSection
+                    {
+                        type = NotificationType.Lark_Bot,
+                        lark_bot = new LarkBotConfig
+                        {
+                            app_id = LarkSecret.BotAppId,
+                            app_secret = LarkSecret.BotAppSecret,
+                        },
+                        // lark_webhook = new LarkWebhookConfig
+                        // {
+                        //     webhook_url = LarkSecret.WebhookUrl,
+                        //     secret_token = LarkSecret.SecretToken
+                        // },
+                        enabled = true, // 알림 기능 사용 여부
+                    },
                     source = new SourceSection
                     {
                         type = ConnectType.mounted_path,
@@ -84,16 +99,6 @@ public class YamlConfigHelper
                             username = AzureBlobSecret.Username,
                             password = AzureBlobSecret.Password, // default는 AzureBlobSecret 안에 비밀번호 사용
                         }
-                    },
-                    notification = new NotificationSection
-                    {
-                        type = NotificationType.Lark_Webhook,
-                        lark_webhook = new LarkWebhookConfig
-                        {
-                            webhook_url = LarkSecret.WebhookUrl,
-                            secret_token = LarkSecret.SecretToken
-                        },
-                        enabled = true, // 알림 기능 사용 여부
                     },
                     awaker = new AwakerSection
                     {
