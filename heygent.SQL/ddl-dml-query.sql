@@ -1,5 +1,5 @@
 
-select * from hr.flex_api_log order by id desc limit 10;
+select * from hr.flex_api_log order by id desc limit 100;
 
 --DROP TABLE hr.flex_department;
 --delete from hr.flex_department;
@@ -12,6 +12,8 @@ select * from hr.flex_jobRoleCode;
 select * from hr.flex_jobRankCode;
 select * from hr.flex_jobTitleCode;
 
+--delete from hr.flex_employee;
+select * from hr.flex_employee where employee_number = '225646' order by employee_number;
 
 /*
 create table hr.tbl_test1
