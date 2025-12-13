@@ -10,8 +10,8 @@ namespace heygent.Core.Notification;
 /// </summary>
 public class LarkBotClient
 {
+    private readonly ILogger<LarkBotClient> _logger;
     private const string BaseUrl = "https://open.larksuite.com/open-apis";
-    
     private readonly string _appId;
     private readonly string _appSecret;
     private readonly HttpClient _httpClient;
@@ -20,8 +20,9 @@ public class LarkBotClient
     private string? _tenantAccessToken;
     private DateTime _tokenExpireTime = DateTime.MinValue;
 
-    public LarkBotClient(string appId, string appSecret)
+    public LarkBotClient(ILogger<LarkBotClient> logger, string appId, string appSecret)
     {
+        _logger = logger;
         _appId = appId;
         _appSecret = appSecret;
         _httpClient = new HttpClient();
@@ -159,6 +160,8 @@ public class LarkBotClient
             Encoding.UTF8,
             "application/json"
         );
+
+        _logger.LogInformation($"LarkBotClient - request.RequestUri={request.RequestUri}, token={token}");
 
         var response = await _httpClient.SendAsync(request);
         var responseBody = await response.Content.ReadAsStringAsync();

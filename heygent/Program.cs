@@ -117,6 +117,7 @@ class Program
                     services.AddTransient<IFileService, FileService>();
 
                     services.AddTransient<Core.Notification.LarkNotificationSender>();
+                    services.AddHttpClient<Core.Notification.LarkBotClient>();
                     services.AddTransient<Core.Notification.EmailNotificationSender>();
                     services.AddTransient<Core.Notification.SmsNotificationSender>();
 
@@ -131,7 +132,7 @@ class Program
 
                     // Gemini API Client 등록
                     services.AddHttpClient<Core.Gemini.GeminiApiClient>();
-
+                    
                     // NamedPipe 서버 등록
                     services.AddSingleton<INamedPipeServer, NamedPipeServer>();
                 })
@@ -208,7 +209,11 @@ class Program
             #region Lark Bot Notification Test
             if (Conf.Current.notification.lark_bot is not null)
             {
+                var loggerFactory = host.Services.GetRequiredService<ILoggerFactory>();
+                var larkBotLogger = loggerFactory.CreateLogger<Core.Notification.LarkBotClient>();
+
                 var larkBot = new Core.Notification.LarkBotClient(
+                    larkBotLogger,
                     Conf.Current.notification.lark_bot.app_id,
                     Conf.Current.notification.lark_bot.app_secret
                 );
@@ -219,12 +224,10 @@ class Program
                     // await larkBot.SendTextMessageAsync("heejo@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
                     // await larkBot.SendTextMessageAsync("nohkuon.park@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
                     // await larkBot.SendTextMessageAsync("henry@nextsecurities.com", "🤖 HEYgent - Lark Bot 테스트 메시지입니다.");
-                    await larkBot.SendInteractiveCardAsync(
-                        "jwoo.kim@nextsecurities.com",
-                        "📢 연차 알림",
-                        "연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!",
-                        "orange"
-                    );
+                    await larkBot.SendInteractiveCardAsync("jwoo.kim@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
+                    // await larkBot.SendInteractiveCardAsync("heejo@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
+                    // await larkBot.SendInteractiveCardAsync("nohkuon.park@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
+                    // await larkBot.SendInteractiveCardAsync("henry@nextsecurities.com", "📢 연차 알림", "[발송 테스트] 연차가 **15일** 남았습니다.\n올해 안에 사용해주세요!", "orange");
                     logger.LogInformation("[LarkBot] 테스트 메시지 발송 성공");
                 }
                 catch (Exception ex)

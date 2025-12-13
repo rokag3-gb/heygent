@@ -18,7 +18,7 @@ select * from hr.flex_employee where employee_number = '225646' order by employe
 
 select * from hr.flex_employee
 where company_leave_date is null
---and name = '주규남'
+and name = '김두한'
 and (primary_department_name = '파생트레이딩플랫폼팀'
      or primary_department_name like '코어%'
     or primary_department_name like '프로덕트엔지니어링팀%'
